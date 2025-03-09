@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>DreamAtlas</title>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #ddd;
+      width: 100%;
+      height: 100%;
+      font-family: sans-serif;
+    }
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    textarea {
+      width: 400px;
+      height: 100px;
+      font-size: 16px;
+      padding: 10px;
+      resize: none;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .constellation-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 10px;
+      background: rgba(0,0,0,0.7);
+      text-align: center;
+      z-index: 10;
+    }
+    .header button {
+      padding: 8px 16px;
+      font-size: 16px;
+    }
+    /* Panel for most similar dreams */
+    .similar-panel {
+      position: absolute;
+      top: 50px;
+      left: 20px;
+      background: rgba(0,0,0,0.8);
+      border: 1px solid #444;
+      border-radius: 4px;
+      z-index: 20;
+      max-width: 300px;
+      color: #ddd;
+      overflow: hidden;
+    }
+    .similar-panel-header {
+      padding: 5px 10px;
+      background: #222;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+    .similar-panel-content {
+      max-height: 150px;
+      overflow-y: auto;
+      padding: 5px 10px;
+      font-size: 13px;
+    }
+    svg {
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+    }
+    .node { cursor: pointer; }
+    .link { stroke-opacity: 0.6; }
+    .tooltip {
+      position: absolute;
+      text-align: left;
+      padding: 10px;
+      font: 12px sans-serif;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      pointer-events: none;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  {% if not user_dream %}
+    <!-- Input view -->
+    <div class="input-container">
+      <h1>DreamAtlas</h1>
+      <form method="post">
+        <textarea name="dream" placeholder="Describe your dream..."></textarea><br>
+        <button type="submit">Submit Dream</button>
+      </form>
+    </div>
+  {% else %}
+    <!-- Constellation view -->
+    <div class="constellation-container">
+      <div class="header">
+        <button onclick="window.location.href='/'">Submit Another Dream</button>
+      </div>
+      <!-- Similar dreams panel -->
+      <div class="similar-panel" id="similarPanel">
+        <div class="similar-panel-header" id="similarPanelHeader">
+          <span>Most Similar Dreams</span>
+          <span id="toggleButton">–</span>
+        </div>
+        <div class="similar-panel-content" id="similarPanelContent">
+            <ul>
+                {% for s in top_similar %}
+                  <li onclick="centerOnDream({{ s[0] }})" style="cursor:pointer;">
+                    {{ s[1] }}<br><small>Sim: {{ "%.2f"|format(s[2]) }}</small>
+                  </li>
+                {% endfor %}
+              </ul>
+        </div>
+      </div>
+      <svg id="constellation"></svg>
+      <div id="tooltip" class="tooltip" style="display: none;"></div>
+    </div>
+    
+    <script>
+      // Toggle panel for similar dreams
+      var panelHeader = document.getElementById("similarPanelHeader");
+      var panelContent = document.getElementById("similarPanelContent");
+      var toggleButton = document.getElementById("toggleButton");
+      panelHeader.addEventListener("click", function() {
+        if (panelContent.style.display === "none") {
+          panelContent.style.display = "block";
+          toggleButton.textContent = "–";
+        } else {
+          panelContent.style.display = "none";
+          toggleButton.textContent = "+";
+        }
+      });
+      
+      var width = window.innerWidth,
+          height = window.innerHeight;
+      
+      var svg = d3.select("#constellation")
+                  .attr("width", width)
+                  .attr("height", height);
+      
+      var container = svg.append("g");
+      
+      // Enable zoom/pan behavior
+      var zoom = d3.zoom()
+          .scaleExtent([0.005, 20])
+          .on("zoom", function() {
+              container.attr("transform", d3.event.transform);
+          });
+      svg.call(zoom);
+      
+      var nodes = {{ nodes|tojson }};
+      var links = {{ links|tojson }};
+      var newDreamId = {{ new_dream_id|tojson }};
+      
+      // Our UMAP coordinates were scaled to [0,30] in Python
+      var xScale = d3.scaleLinear().domain([0, 30]).range([0, width]);
+      var yScale = d3.scaleLinear().domain([0, 30]).range([0, height]);
+      
+      // Define a piecewise function for stroke width.
+      function getStrokeWidth(similarity) {
+          if (similarity < 0.7) {
+              var clamped = Math.max(0.5, similarity);
+              return 0.01 + ((clamped - 0.5) / 0.2) * (0.1 - 0.01);
+          } else {
+              return 0.1 + ((similarity - 0.7) / 0.3) * (3 - 0.1);
+          }
+      }
+
+      function centerOnDream(dreamId) {
+    var targetNode = nodes.find(n => n.id === dreamId);
+    if (targetNode) {
+        var targetX = xScale(targetNode.x);
+        var targetY = yScale(targetNode.y);
+        var currentTransform = d3.zoomTransform(svg.node());
+        var currentScale = currentTransform.k;
+        var tx = width/2 - targetX * currentScale;
+        var ty = height/2 - targetY * currentScale;
+        svg.transition().duration(750)
+           .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(currentScale));
+    }
+}
+
+      
+      // Create link elements with click and hover behavior.
+var link = container.append("g")
+    .attr("class", "links")
+  .selectAll("line")
+  .data(links)
+  .enter().append("line")
+    .attr("class", "link")
+    .style("stroke", "#ccc")
+    .style("stroke-width", function(d) {
+        var baseWidth = getStrokeWidth(d.similarity);
+        if (d.source === newDreamId || d.target === newDreamId) {
+            return baseWidth * 2;
+        } else {
+            return baseWidth;
+        }
+    })
+    .on("click", function(d) {
+        // Get both endpoints
+        var sourceNode = nodes.find(n => n.id === d.source);
+        var targetNode = nodes.find(n => n.id === d.target);
+        // Calculate screen coordinates for each
+        var sourceX = xScale(sourceNode.x), sourceY = yScale(sourceNode.y);
+        var targetX = xScale(targetNode.x), targetY = yScale(targetNode.y);
+        var centerX = width / 2, centerY = height / 2;
+        // Compute distances from center
+        var distSource = Math.sqrt(Math.pow(sourceX - centerX, 2) + Math.pow(sourceY - centerY, 2));
+        var distTarget = Math.sqrt(Math.pow(targetX - centerX, 2) + Math.pow(targetY - centerY, 2));
+        // Choose the endpoint that's farther from the center
+        var chosen = (distSource > distTarget) ? sourceNode : targetNode;
+        var chosenX = xScale(chosen.x), chosenY = yScale(chosen.y);
+        var currentTransform = d3.zoomTransform(svg.node());
+        var currentScale = currentTransform.k;
+        var tx = width / 2 - chosenX * currentScale;
+        var ty = height / 2 - chosenY * currentScale;
+        svg.transition().duration(750)
+           .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(currentScale));
+    })
+    .on("mouseover", function(d) {
+        d3.select(this).transition().duration(100)
+            .style("stroke-width", getStrokeWidth(d.similarity) * 2);
+    })
+    .on("mouseout", function(d) {
+        d3.select(this).transition().duration(100)
+            .style("stroke-width", function(d) {
+                var baseWidth = getStrokeWidth(d.similarity);
+                if (d.source === newDreamId || d.target === newDreamId) {
+                    return baseWidth * 2;
+                } else {
+                    return baseWidth;
+                }
+            });
+    });
+
+      
+      // Define node size scale: smaller stars from 0.3 to 4 px radius.
+      var scoreExtent = d3.extent(nodes, function(d) { return d.score; });
+      if (scoreExtent[0] === scoreExtent[1]) {
+          scoreExtent[0] = 0.9 * scoreExtent[0];
+          scoreExtent[1] = 1.1 * scoreExtent[1];
+      }
+      var sizeScale = d3.scalePow().exponent(2)
+                        .domain(scoreExtent)
+                        .range([0.1, 3]);
+      
+      // Create node elements
+      var node = container.append("g")
+                          .attr("class", "nodes")
+                        .selectAll("circle")
+                        .data(nodes)
+                        .enter().append("circle")
+                          .attr("class", "node")
+                          .attr("cx", function(d) { return xScale(d.x); })
+                          .attr("cy", function(d) { return yScale(d.y); })
+                          .attr("r", function(d) { return sizeScale(d.score); })
+                          .attr("fill", function(d) { return d.id === newDreamId ? "orange" : "#fff"; })
+                          .on("mouseover", function(d) {
+                              d3.select(this).transition().duration(200)
+                                .attr("r", sizeScale(d.score) + 2);
+                              d3.select("#tooltip")
+                                .style("display", "block")
+                                .html("<strong>Dream " + d.id + ":</strong><br>" + d.text);
+                          })
+                          .on("mousemove", function(d) {
+                              d3.select("#tooltip")
+                                .style("left", (d3.event.pageX + 10) + "px")
+                                .style("top", (d3.event.pageY + 10) + "px");
+                          })
+                          .on("mouseout", function(d) {
+                              d3.select(this).transition().duration(200)
+                                .attr("r", sizeScale(d.score));
+                              d3.select("#tooltip").style("display", "none");
+                          });
+      
+      // Update link endpoints using scaled positions
+      link
+        .attr("x1", function(d) {
+          var sourceNode = nodes.find(n => n.id === d.source);
+          return xScale(sourceNode.x);
+        })
+        .attr("y1", function(d) {
+          var sourceNode = nodes.find(n => n.id === d.source);
+          return yScale(sourceNode.y);
+        })
+        .attr("x2", function(d) {
+          var targetNode = nodes.find(n => n.id === d.target);
+          return xScale(targetNode.x);
+        })
+        .attr("y2", function(d) {
+          var targetNode = nodes.find(n => n.id === d.target);
+          return yScale(targetNode.y);
+        });
+      
+      // Center view on new dream with initial zoom (scale 5)
+      var newDream = nodes.find(n => n.id === newDreamId);
+      if (newDream) {
+          var dreamX = xScale(newDream.x);
+          var dreamY = yScale(newDream.y);
+          var initialScale = 5;
+          var tx = width / 2 - dreamX * initialScale;
+          var ty = height / 2 - dreamY * initialScale;
+          svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(initialScale));
+      }
+    </script>
+  {% endif %}
+</body>
+</html>
