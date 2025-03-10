@@ -4,6 +4,11 @@ import numpy as np
 from sentence_transformers import SentenceTransformer, util
 import umap
 import random
+import os
+
+port = os.environ.get("PORT", "PORT not set")
+print("Starting app on PORT:", port)
+
 
 app = Flask(__name__)
 
@@ -125,7 +130,7 @@ def index():
     )
 
 import os
-
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))  # default is 10000 if not set
+    port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
