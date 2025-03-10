@@ -1,2 +1,4 @@
 venv/
 dreams.db
+__pycache__/
+
