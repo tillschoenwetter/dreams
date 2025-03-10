@@ -29,6 +29,22 @@ def init_db():
 
 init_db()
 
+@app.route('/all_dreams')
+def all_dreams():
+    conn = sqlite3.connect("dreams.db")
+    c = conn.cursor()
+    c.execute("SELECT id, text FROM dreams")
+    rows = c.fetchall()
+    conn.close()
+    
+    # Format dreams as an HTML list
+    dream_list = "<h1>All Dreams</h1><ul>"
+    for dream in rows:
+        dream_list += f"<li><strong>ID {dream[0]}:</strong> {dream[1]}</li>"
+    dream_list += "</ul>"
+    
+    return dream_list
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     user_dream = None
@@ -126,6 +142,4 @@ def index():
     )
 
 if __name__ == '__main__':
-    import os
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)Helloworld2&Bye
