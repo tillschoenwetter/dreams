@@ -37,12 +37,9 @@ def all_dreams():
     rows = c.fetchall()
     conn.close()
     
-    # Format dreams as an HTML list
+    # Build an HTML list
     dream_list = "<h1>All Dreams</h1><ul>"
-    for dream in rows:
-        dream_id = dream[0]
-        dream_text = dream[1]
-        # Create a list item with a Delete form
+    for dream_id, dream_text in rows:
         dream_list += f"""
         <li>
             <strong>ID {dream_id}:</strong> {dream_text}
@@ -52,7 +49,6 @@ def all_dreams():
         </li>
         """
     dream_list += "</ul>"
-    
     return dream_list
 
 
@@ -64,7 +60,7 @@ def delete_dream(dream_id):
     c.execute("DELETE FROM dreams WHERE id = ?", (dream_id,))
     conn.commit()
     conn.close()
-    # Redirect back to the all_dreams page after deletion
+    # Redirect to see updated list
     return redirect(url_for('all_dreams'))
 
 
