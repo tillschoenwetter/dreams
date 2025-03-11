@@ -40,10 +40,35 @@ def all_dreams():
     # Format dreams as an HTML list
     dream_list = "<h1>All Dreams</h1><ul>"
     for dream in rows:
-        dream_list += f"<li><strong>ID {dream[0]}:</strong> {dream[1]}</li>"
+        dream_id = dream[0]
+        dream_text = dream[1]
+        # Create a list item with a Delete form
+        dream_list += f"""
+        <li>
+            <strong>ID {dream_id}:</strong> {dream_text}
+            <form action="/delete_dream/{dream_id}" method="POST" style="display:inline;">
+                <button type="submit">Delete</button>
+            </form>
+        </li>
+        """
     dream_list += "</ul>"
     
     return dream_list
+
+
+@app.route('/delete_dream/<int:dream_id>', methods=['POST'])
+def delete_dream(dream_id):
+    # Connect to the DB
+    conn = sqlite3.connect("dreams.db")
+    c = conn.cursor()
+
+    # Delete the dream with the given ID
+    c.execute("DELETE FROM dreams WHERE id = ?", (dream_id,))
+    conn.commit()
+    conn.close()
+
+    # Redirect to some page (e.g., index) after deletion
+    return redirect(url_for('index'))
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
