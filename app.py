@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
@@ -56,19 +56,17 @@ def all_dreams():
     return dream_list
 
 
+
 @app.route('/delete_dream/<int:dream_id>', methods=['POST'])
 def delete_dream(dream_id):
-    # Connect to the DB
     conn = sqlite3.connect("dreams.db")
     c = conn.cursor()
-
-    # Delete the dream with the given ID
     c.execute("DELETE FROM dreams WHERE id = ?", (dream_id,))
     conn.commit()
     conn.close()
+    # Redirect back to the all_dreams page after deletion
+    return redirect(url_for('all_dreams'))
 
-    # Redirect to some page (e.g., index) after deletion
-    return redirect(url_for('index'))
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
