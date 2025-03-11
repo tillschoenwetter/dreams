@@ -42,10 +42,10 @@ def all_dreams():
     for dream_id, dream_text in rows:
         dream_list += f"""
         <li>
+            <strong>ID {dream_id}:</strong> {dream_text}
             <form action="/delete_dream/{dream_id}" method="POST" style="display:inline;">
                 <button type="submit">Delete</button>
             </form>
-            <strong>ID {dream_id}:</strong> {dream_text}
         </li>
         """
     dream_list += "</ul>"
