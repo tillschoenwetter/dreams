@@ -193,7 +193,7 @@ def explore():
         node["y"] = float(norm_y * scale_factor) + random.uniform(-0.1, 0.1)
 
     links = []
-    threshold = 0.65
+    threshold = 0.3
     for i in range(len(rows)):
         for j in range(i+1, len(rows)):
             sim = float(similarity_matrix[i][j])
