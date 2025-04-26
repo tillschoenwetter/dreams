@@ -10,6 +10,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 model = SentenceTransformer('all-MiniLM-L6-v2')
+DEFAULT_THRESHOLD = 0.5
 
 def preprocess_dream(text):
     return text.strip()
@@ -135,7 +136,7 @@ def submitted(dream_id):
         node["y"] = float(norm_y * scale_factor) + random.uniform(-0.1, 0.1)
 
     links = []
-    threshold = 0.65
+    threshold = DEFAULT_THRESHOLD
     for i in range(len(rows)):
         for j in range(i+1, len(rows)):
             sim = float(similarity_matrix[i][j])
@@ -193,7 +194,7 @@ def explore():
         node["y"] = float(norm_y * scale_factor) + random.uniform(-0.1, 0.1)
 
     links = []
-    threshold = 0.3
+    threshold = DEFAULT_THRESHOLD
     for i in range(len(rows)):
         for j in range(i+1, len(rows)):
             sim = float(similarity_matrix[i][j])
@@ -204,14 +205,29 @@ def explore():
                     "similarity": sim
                 })
 
+    # Add initial similar dreams data
+    first_dream = rows[0]
+    first_embedding = json.loads(first_dream[2])
+    cosine_scores = util.cos_sim(first_embedding, embeddings)[0]
+    top_similar = [
+        (rows[i][0], rows[i][1], float(cosine_scores[i]))
+        for i in range(len(rows)) if rows[i][0] != first_dream[0]
+    ]
+    top_similar.sort(key=lambda x: x[2], reverse=True)
+    top_similar = top_similar[:4]
+
     return render_template(
         'index.html',
         user_dream="explore",
-        top_similar=[],
+        top_similar=top_similar,  # Add this line
         nodes=nodes,
         links=links,
         new_dream_id=None
     )
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 if __name__ == '__main__':
     app.run(debug=True)

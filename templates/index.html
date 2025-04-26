@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>DreamAtlas</title>
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -28,37 +29,39 @@
     <!-- Constellation view -->
     <div class="constellation-container">
       <div class="header">
-        <!-- Similarity Threshold Slider -->
-<div class="threshold-slider">
-  <label for="similarityRange">Link Threshold: <span id="thresholdValue">0.65</span></label>
-  <input type="range" min="0.1" max="1.0" step="0.01" value="0.65" id="similarityRange" />
-</div>
+        <!-- Add search input -->
+        <div class="search-container">
+          <input type="text" id="dreamSearch" placeholder="Search dreams..." />
+        </div>
+
+        <!-- Existing threshold slider -->
+        <div class="threshold-slider">
+          <label for="similarityRange">Constellation Visibility: <span id="thresholdValue">0.35</span></label>
+          <input type="range" min="0.0" max="1.0" step="0.01" value="0.50" id="similarityRange" />
+        </div>
 
         <button onclick="window.location.href='/'">Submit Another Dream</button>
         <p style="font-size:12px; text-align:center; margin-top:5px;">
- </br>
           for feedback or questions, please contact us at hello@dreamatlas.cloud
         </p>
       </div>
 
-      {% if new_dream_id %}
-        <!-- Similar dreams panel -->
-        <div class="similar-panel" id="similarPanel">
-          <div class="similar-panel-header" id="similarPanelHeader">
-            <span>Most Similar Dreams</span>
-            <span id="toggleButton">–</span>
-          </div>
-          <div class="similar-panel-content" id="similarPanelContent">
-              <ul>
-                {% for s in top_similar %}
-                  <li onclick="panelClick({{ s[0] }})" style="cursor:pointer;">
-                    {{ s[1] }}<br><small>Sim: {{ "%.2f"|format(s[2]) }}</small>
-                  </li>
-                {% endfor %}
-              </ul>
-          </div>
+      <!-- Similar dreams panel - removed if condition -->
+      <div class="similar-panel" id="similarPanel">
+        <div class="similar-panel-header" id="similarPanelHeader">
+          <span>Most Similar Dreams</span>
+          <span id="toggleButton">–</span>
         </div>
-      {% endif %}
+        <div class="similar-panel-content" id="similarPanelContent">
+          <ul>
+            {% for s in top_similar %}
+              <li onclick="panelClick({{ s[0] }})" style="cursor:pointer;">
+                {{ s[1] }}<br><small>Sim: {{ "%.2f"|format(s[2]) }}</small>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
 
       <svg id="constellation"></svg>
       <div id="tooltip" class="tooltip" style="display: none;"></div>
@@ -83,26 +86,15 @@
     const spinner = document.getElementById("preloadSpinner");
     const formEl = document.getElementById("dreamForm");
 
-    // Show spinner & attach geolocation before form submission
+    // Show spinner on form submission
     if (formEl) {
-      formEl.addEventListener("submit", function(e) {
-        if (navigator.geolocation) {
-          e.preventDefault();
-          spinner.style.display = "flex";
-          navigator.geolocation.getCurrentPosition(function(position) {
-            const coords = position.coords.latitude + "," + position.coords.longitude;
-            const locField = document.createElement("input");
-            locField.type = "hidden";
-            locField.name = "location";
-            locField.value = coords;
-            formEl.appendChild(locField);
-            formEl.submit();
-          }, function() {
-            formEl.submit(); // fallback
-          });
-        } else {
-          spinner.style.display = "flex";
-        }
+      formEl.addEventListener("submit", function() {
+        spinner.style.display = "flex";
+        const locField = document.createElement("input");
+        locField.type = "hidden";
+        locField.name = "location";
+        locField.value = Intl.DateTimeFormat().resolvedOptions().timeZone; // Use timezone instead
+        formEl.appendChild(locField);
       });
     }
 

@@ -177,17 +177,25 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     // --- SIMILARITY THRESHOLD DYNAMIC FILTERING ---
 const thresholdSlider = document.getElementById("similarityRange");
 const thresholdDisplay = document.getElementById("thresholdValue");
-thresholdSlider.addEventListener("input", function () {
-  const threshold = parseFloat(this.value);
-  thresholdDisplay.textContent = threshold.toFixed(2);
 
-  // Update link visibility based on threshold
-  d3.selectAll(".link").style("display", d => {
-    return d.similarity >= threshold ? "block" : "none";
-  });
+thresholdSlider.addEventListener("input", function () {
+  const visibility = parseFloat(this.value);
+  thresholdDisplay.textContent = visibility.toFixed(2);
+
+  // Update all links with new visibility and width
+  d3.selectAll(".link")
+    .style("stroke-opacity", d => {
+      // Full opacity at visibility 1, fade to 0 at visibility 0
+      return Math.min(0.6, visibility * 0.6);
+    })
+    .style("stroke-width", function(d) {
+      // Scale width based on visibility value
+      const width = getStrokeWidth(d.similarity) * visibility;
+      return (d.source === newDreamId || d.target === newDreamId) ? 
+        width * 2 : width;
+    });
 });
 
-  
     // Optional: Hide spinner if it exists
     const preload = document.getElementById("preloadSpinner");
     if (preload) {
@@ -195,5 +203,35 @@ thresholdSlider.addEventListener("input", function () {
         preload.style.display = "none";
       }, 500);
     }
+
+    // Add after nodes creation
+const searchInput = document.getElementById("dreamSearch");
+if (searchInput) {
+  searchInput.addEventListener("input", function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    
+    // Reset all nodes
+    d3.selectAll(".node")
+      .classed("search-match", false)
+      .attr("fill", d => d.id === newDreamId ? "orange" : "#fff");
+    
+    if (searchTerm.length > 0) {
+      // Find matching nodes
+      const matches = nodes.filter(node => 
+        node.text.toLowerCase().includes(searchTerm)
+      );
+      
+      // Highlight matches
+      d3.selectAll(".node")
+        .filter(d => matches.some(m => m.id === d.id))
+        .classed("search-match", true);
+
+      // If we have matches, center on the first one
+      if (matches.length > 0) {
+        centerOnDream(matches[0].id);
+        updateSimilarPanel(matches[0].id);
+      }
+    }
+  });
+}
   }
-  
