@@ -56,19 +56,33 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     }
   
     function updateSimilarPanel(nodeId) {
-      const similarDreams = links
-        .filter(link => link.source === nodeId || link.target === nodeId)
-        .map(link => {
-          const partnerId = (link.source === nodeId) ? link.target : link.source;
-          return { id: partnerId, similarity: link.similarity };
-        })
-        .sort((a, b) => b.similarity - a.similarity);
-  
+      // Get all nodes except the current one
+      const otherNodes = nodes.filter(n => n.id !== nodeId);
+      
+      // Calculate similarities using the similarity matrix
+      const similarDreams = otherNodes.map(node => {
+        const link = links.find(l => 
+          (l.source === nodeId && l.target === node.id) || 
+          (l.target === nodeId && l.source === node.id)
+        );
+        return {
+          id: node.id,
+          text: node.text,
+          similarity: link ? link.similarity : 0
+        };
+      })
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, 4);  // Show top 4 most similar
+
       const html = similarDreams.map(item => {
         const partner = nodes.find(n => n.id === item.id);
-        return partner ? `<li onclick='panelClick(${partner.id})' style='cursor:pointer;'>${partner.text}<br><small>Sim: ${item.similarity.toFixed(2)}</small></li>` : "";
+        return partner ? 
+          `<li onclick='panelClick(${partner.id})' style='cursor:pointer;'>
+            ${partner.text}<br>
+            <small>Sim: ${item.similarity.toFixed(2)}</small>
+          </li>` : "";
       }).join("");
-  
+
       const panel = document.getElementById("similarPanelContent");
       if (panel) panel.innerHTML = `<ul>${html}</ul>`;
     }
