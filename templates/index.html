@@ -50,8 +50,7 @@
         </div>
 
         <button onclick="window.location.href='/'">Submit Another Dream</button>
-        <p style="font-size:12px; text-align:center; margin-top:5px;">
- </br>
+        <p style="font-size:12px; text-align:center; margin-top:5px;"> 
           for feedback or questions, please contact us at hello@dreamatlas.cloud
         </p>
       </div>
@@ -123,8 +122,8 @@
     const ctx = canvas.getContext('2d');
     let stars = []; 
     let interactableStars = []; 
-    const numStars = 200;
-    const numInteractable = 50;
+    const numStars = 200; // NUMBER OF STARS IN BG
+    const numInteractable = 50; // NUMBER OF STARS THAT ACTUALLY MAKE LINES
     let mouseX = -1000, mouseY = -1000;
   
     function resizeCanvas() {
@@ -140,8 +139,8 @@
         const star = {
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          radius: Math.random() * 1.5 + 0.2,
-          opacity: Math.random() * 0.6 + 0.2
+          radius: Math.random() * 1.5 + 0.2, // CHANGE RADIUS OF STARS
+          opacity: Math.random() * 0.6 + 0.2 // CHAGE OPACITY OF STARS
         };
         stars.push(star);
       }
@@ -160,7 +159,7 @@
     }
   
     function drawConnections() {
-      const threshold = 250;
+      const threshold = 250; // DISTANCE FOR CREATING CONNECTION
       for (const star of interactableStars) {
         const dx = star.x - mouseX;
         const dy = star.y - mouseY;
