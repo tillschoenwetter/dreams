@@ -2,11 +2,10 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>DreamAtlas</title>
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link rel="icon" href="data:,"> <!-- Prevent favicon.ico 404 -->
+  <link rel="icon" href="{{ url_for('static', filename='imgs/favicon.svg') }}">
 
   <style>
     body.loading {
@@ -15,14 +14,24 @@
   </style>
 </head>
 <body>
+  <canvas id="star-canvas"></canvas> <!-- canvas containing bg stars-->
+  <div class="header">
+    <a href="about.html">About</a>
+  </div>
   {% if not user_dream %}
     <!-- Input view -->
     <div class="input-container">
-      <h1>DreamAtlas</h1>
+      <!-- Flask is a lil bitch and cannot accept static file in the traditional way, so u need to use url_for -->
+      <img src="{{ url_for('static', filename='imgs/DreamAtlas_logo.svg') }}" alt="DreamAtlas Logo">
       <form method="post" id="dreamForm">
-        <textarea name="dream" placeholder="Describe your dream..."></textarea><br>
-        <button type="submit">Submit Dream</button>
-        <button type="button" data-explore style="margin-top: 10px;">Explore Dreams</button>
+        <div class="dream-box">
+          <textarea name="dream" placeholder="Describe your dream..."></textarea>
+        </div>
+        <br>
+        <div class="buttons">
+          <button type="submit">Submit Dream</button>
+          <button type="button" data-explore style="margin-top: 10px;">Explore Dreams</button>
+        </div>
       </form>
     </div>
   {% else %}
@@ -42,6 +51,7 @@
 
         <button onclick="window.location.href='/'">Submit Another Dream</button>
         <p style="font-size:12px; text-align:center; margin-top:5px;">
+ </br>
           for feedback or questions, please contact us at hello@dreamatlas.cloud
         </p>
       </div>
@@ -107,5 +117,113 @@
       });
     }
   </script>
+  <!-- <div class="dot"></div> --> <!-- 👈 Floating dot lives here -->
+  <!-- And here cute little dot follows you -->
+  <!-- <script>
+    const dot = document.querySelector('.dot');
+    if (dot) {
+      let targetX = 0, targetY = 0;
+      let currentX = 0, currentY = 0;
+      const ease = 0.1;
+  
+      document.addEventListener('mousemove', (e) => {
+        targetX = e.clientX;
+        targetY = e.clientY;
+      });
+  
+      function animateDot() {
+        currentX += (targetX - currentX) * ease;
+        currentY += (targetY - currentY) * ease;
+        dot.style.left = currentX + 'px';
+        dot.style.top = currentY + 'px';
+        requestAnimationFrame(animateDot);
+      }
+  
+      animateDot();
+    }
+  </script> -->
+  
+  <script>
+    const canvas = document.getElementById('star-canvas');
+    const ctx = canvas.getContext('2d');
+    let stars = []; 
+    let interactableStars = []; 
+    const numStars = 200;
+    const numInteractable = 50;
+    let mouseX = -1000, mouseY = -1000;
+  
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      generateStars(); 
+    }
+  
+    function generateStars() {
+      stars = [];
+      interactableStars = [];
+      for (let i = 0; i < numStars; i++) {
+        const star = {
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 1.5 + 0.2,
+          opacity: Math.random() * 0.6 + 0.2
+        };
+        stars.push(star);
+      }
+      interactableStars = [...stars].sort((a, b) => b.opacity - a.opacity).slice(0, numInteractable);
+    }
+  
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const star of stars) {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+        ctx.fill();
+      }
+      drawConnections();
+    }
+  
+    function drawConnections() {
+      const threshold = 250;
+      for (const star of interactableStars) {
+        const dx = star.x - mouseX;
+        const dy = star.y - mouseY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < threshold) {
+          ctx.beginPath();
+          ctx.moveTo(mouseX, mouseY);
+          ctx.lineTo(star.x, star.y);
+          ctx.strokeStyle = `rgba(255, 255, 255, ${(1 - distance / threshold).toFixed(2)})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      }
+    }
+  
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      console.log("mouse moved:", mouseX, mouseY); // 👈 test log
+    });
+  
+    window.addEventListener('resize', resizeCanvas);
+  
+    function animate() {
+      drawStars();
+      requestAnimationFrame(animate);
+    }
+  
+    resizeCanvas();
+    animate();
+  </script>
+  
+
 </body>
+<footer>
+  <div class="footer_info">
+    <h6>copyright by the dream team</h6>
+  </div>
+  <div class="horizon"></div>
+</footer>
 </html>
