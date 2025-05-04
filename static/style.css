@@ -1,12 +1,25 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #000;
   color: #ddd;
   width: 100%;
   height: 100%;
   font-family: sans-serif;
 }
+
+#star-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1; /* 👈 puts it behind everything else */
+  display: block;
+  pointer-events: none; /* 👈 This is the key! */
+  background: black; /* fallback in case canvas fails */
+}
+
+
 .input-container {
   display: flex;
   flex-direction: column;
@@ -14,13 +27,66 @@ html, body {
   align-items: center;
   height: 100vh;
 }
-textarea {
-  width: 400px;
-  height: 100px;
+.input-container img {
+  max-width: 200px;
+  margin-bottom: 30px;
+  animation: glowPulse 5s ease-in-out infinite;
+}
+.dream-box {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
+  padding: 20px;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.08),
+              0 0 50px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
+  transition: box-shadow 0.3s ease;
+  width: 80vw;      /* 80% of the screen width */
+  max-width: 900px;
+}
+
+.dream-box:hover {
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.15),
+              0 0 60px rgba(255, 255, 255, 0.1);
+}
+
+.dream-box textarea {
+  width: 100%;
+  height: 160px;
+  background: transparent;
+  border: none;
+  color: #eee;
+  font-family: 'Georgia', serif;
   font-size: 16px;
-  padding: 10px;
+  line-height: 1.4;
+  outline: none;
   resize: none;
 }
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px; /* optional: space between buttons */
+  margin-top: 20px;
+}
+
+.buttons button {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
+  padding: 20px;
+  font-family: 'Georgia', serif;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.08),
+              0 0 50px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
+  transition: box-shadow 0.3s ease;
+  max-width: 600px;
+  align-items: center;
+}
+
+.buttons button:hover {
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.15),
+              0 0 60px rgba(255, 255, 255, 0.1);
+}
+
 button {
   margin-top: 10px;
   padding: 8px 16px;
@@ -119,7 +185,6 @@ svg {
   0%   { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-/* Update the class name if desired (optional) */
 .threshold-slider {
   position: absolute;
   top: 50px;
@@ -133,40 +198,27 @@ svg {
   z-index: 20;
 }
 
-/* Add search styles */
-.search-container {
-  margin-bottom: 10px;
-}
-
-.search-container input {
-  width: 200px;
-  padding: 8px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.8);
-  color: #ddd;
-  font-size: 14px;
-}
-
-.search-container input::placeholder {
-  color: #888;
-}
-
-.node.search-match {
-  stroke: #ffeb3b;
-  stroke-width: 2px;
-}
-
-/* Update mobile styles */
-@media screen and (max-width: 768px) {
-  .search-container {
-    width: 100%;
-    padding: 0 10px;
-    box-sizing: border-box;
+@keyframes glowPulse {
+  0% {
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
   }
-
-  .search-container input {
-    width: 100%;
-    max-width: 300px;
+  50% {
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
   }
+  100% {
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+  }
+}
+
+
+/* footer */
+.horizon {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 100px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.1), transparent);
+}
+.footer_info {
+  z-index: 20;
 }
