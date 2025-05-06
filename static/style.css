@@ -7,6 +7,24 @@ html, body {
   font-family: sans-serif;
 }
 
+* {
+  cursor: default;
+}
+
+/* Override for specific interactive elements */
+button, 
+.similar-panel-header,
+.node,
+.link {
+  cursor: pointer;
+}
+
+/* Only show text cursor for inputs and textareas */
+input[type="text"],
+textarea {
+  cursor: text;
+}
+
 #star-canvas {
   position: fixed;
   top: 0;
@@ -22,6 +40,7 @@ html, body {
   -moz-user-select: none;
   -ms-user-select: none;
   outline: none;  /* Remove focus outline */
+  cursor: default !important;
 }
 
 .input-container {
@@ -106,6 +125,7 @@ button {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  cursor: default;
 }
 .header {
   position: absolute;
@@ -220,10 +240,25 @@ svg {
 
 
 /* footer */
+footer {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  pointer-events: none;
+  cursor: default;
+}
+
 .horizon {
   position: absolute;
   bottom: 0;
   width: 100%;
   height: 100px;
   background: linear-gradient(to top, rgba(255, 255, 255, 0.1), transparent);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  cursor: default;
 }
