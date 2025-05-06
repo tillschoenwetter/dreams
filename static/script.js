@@ -1,3 +1,29 @@
+// Replace the existing pageshow event listener with this updated version
+window.addEventListener('pageshow', function(event) {
+    const spinner = document.getElementById("preloadSpinner");
+    if (spinner) {
+        spinner.style.display = "none";
+    }
+});
+
+// Add this new unload event listener
+window.addEventListener('unload', function() {
+    // This ensures the spinner is hidden when navigating away
+    const spinner = document.getElementById("preloadSpinner");
+    if (spinner) {
+        spinner.style.display = "none";
+    }
+});
+
+// Add this new popstate event listener
+window.addEventListener('popstate', function() {
+    // This handles the back/forward buttons
+    const spinner = document.getElementById("preloadSpinner");
+    if (spinner) {
+        spinner.style.display = "none";
+    }
+});
+
 // Only run if this page includes constellation data
 if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
 

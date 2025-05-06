@@ -191,6 +191,16 @@
     animate();
   </script>
   
+  <!-- Add right before closing </body> tag -->
+  <script>
+    // Ensure spinner is hidden when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      const spinner = document.getElementById("preloadSpinner");
+      if (spinner) {
+          spinner.style.display = "none";
+      }
+    });
+  </script>
 
 </body>
 <footer>
