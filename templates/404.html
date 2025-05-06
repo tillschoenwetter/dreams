@@ -4,7 +4,6 @@
     <title>Page Not Found - DreamAtlas</title>
     <style>
         body {
-            background: #000;
             color: #ddd;
             font-family: sans-serif;
             display: flex;
@@ -37,7 +36,19 @@
         a:hover {
             background: #fff;
             color: #000;
+            
         }
+        #star-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1; /* 👈 puts it behind everything else */
+            display: block;
+            pointer-events: none; /* 👈 This is the key! */
+            background: black; /* fallback in case canvas fails */
+          }
     </style>
 </head>
 <body>
@@ -46,5 +57,80 @@
         <p>This dream seems to have faded away...</p>
         <a href="/">Return to DreamAtlas</a>
     </div>
+    <canvas id="star-canvas"></canvas> <!-- canvas containing bg stars-->
+    <script>
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+        let stars = []; 
+        let interactableStars = []; 
+        const numStars = 200; // NUMBER OF STARS IN BG
+        const numInteractable = 50; // NUMBER OF STARS THAT ACTUALLY MAKE LINES
+        let mouseX = -1000, mouseY = -1000;
+      
+        function resizeCanvas() {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+          generateStars(); 
+        }
+      
+        function generateStars() {
+          stars = [];
+          interactableStars = [];
+          for (let i = 0; i < numStars; i++) {
+            const star = {
+              x: Math.random() * canvas.width,
+              y: Math.random() * canvas.height,
+              radius: Math.random() * 1.5 + 0.2, // CHANGE RADIUS OF STARS
+              opacity: Math.random() * 0.6 + 0.2 // CHAGE OPACITY OF STARS
+            };
+            stars.push(star);
+          }
+          interactableStars = [...stars].sort((a, b) => b.opacity - a.opacity).slice(0, numInteractable);
+        }
+      
+        function drawStars() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          for (const star of stars) {
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+            ctx.fill();
+          }
+          drawConnections();
+        }
+      
+        function drawConnections() {
+          const threshold = 250; // DISTANCE FOR CREATING CONNECTION
+          for (const star of interactableStars) {
+            const dx = star.x - mouseX;
+            const dy = star.y - mouseY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < threshold) {
+              ctx.beginPath();
+              ctx.moveTo(mouseX, mouseY);
+              ctx.lineTo(star.x, star.y);
+              ctx.strokeStyle = `rgba(255, 255, 255, ${(1 - distance / threshold).toFixed(2)})`;
+              ctx.lineWidth = 0.8;
+              ctx.stroke();
+            }
+          }
+        }
+      
+        document.addEventListener('mousemove', (e) => {
+          mouseX = e.clientX;
+          mouseY = e.clientY;
+          console.log("mouse moved:", mouseX, mouseY); // 👈 test log
+        });
+      
+        window.addEventListener('resize', resizeCanvas);
+      
+        function animate() {
+          drawStars();
+          requestAnimationFrame(animate);
+        }
+      
+        resizeCanvas();
+        animate();
+      </script>
 </body>
 </html>
