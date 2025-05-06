@@ -17,8 +17,12 @@ html, body {
   display: block;
   pointer-events: none; /* 👈 This is the key! */
   background: black; /* fallback in case canvas fails */
+  user-select: none;  /* Prevent text selection */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  outline: none;  /* Remove focus outline */
 }
-
 
 .input-container {
   display: flex;
@@ -98,6 +102,10 @@ button {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 .header {
   position: absolute;
