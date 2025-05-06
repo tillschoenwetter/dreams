@@ -244,5 +244,9 @@ def explore():
 def page_not_found(e):
     return render_template('404.html'), 404
 
+@app.route('/telescope')
+def telescope():
+    return render_template('telescope.html')
+
 if __name__ == '__main__':
     app.run(debug=True)

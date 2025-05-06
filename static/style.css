@@ -249,7 +249,7 @@ footer {
   cursor: default;
 }
 
-.horizon {
+.landing-footer .horizon {
   position: absolute;
   bottom: 0;
   width: 100%;

@@ -4,3 +4,4 @@ __pycache__/
 dreams.sb.backup
 desktop.ini
 dreams.db
+.DS_Store
