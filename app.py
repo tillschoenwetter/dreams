@@ -9,8 +9,8 @@ import json
 from datetime import datetime
 
 app = Flask(__name__)
-model = SentenceTransformer('all-MiniLM-L6-v2')
-DEFAULT_THRESHOLD = 0.5
+model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')  # Larger, better at paraphrasing
+DEFAULT_THRESHOLD = 0.3
 
 def preprocess_dream(text):
     return text.strip()
@@ -124,7 +124,12 @@ def submitted(dream_id):
         sum_sim = sum(float(similarity_matrix[i][j]) for j in range(len(rows)) if i != j)
         node["score"] = sum_sim
 
-    reducer = umap.UMAP(n_neighbors=2, min_dist=1e-5, spread=50.0)
+    reducer = umap.UMAP(
+        n_neighbors=15,  # Look at more neighbors
+        min_dist=0.1,    # Allow more spacing
+        spread=1.0,      # Reduce the spread
+        metric='cosine'  # Use same metric as similarity calculation
+    )
     coords_2d = reducer.fit_transform(embeddings)
 
     xs, ys = coords_2d[:, 0], coords_2d[:, 1]
@@ -182,7 +187,12 @@ def explore():
         sum_sim = sum(float(similarity_matrix[i][j]) for j in range(len(rows)) if i != j)
         node["score"] = sum_sim
 
-    reducer = umap.UMAP(n_neighbors=2, min_dist=1e-5, spread=50.0)
+    reducer = umap.UMAP(
+        n_neighbors=15,  # Look at more neighbors
+        min_dist=0.1,    # Allow more spacing
+        spread=1.0,      # Reduce the spread
+        metric='cosine'  # Use same metric as similarity calculation
+    )
     coords_2d = reducer.fit_transform(embeddings)
 
     xs, ys = coords_2d[:, 0], coords_2d[:, 1]
