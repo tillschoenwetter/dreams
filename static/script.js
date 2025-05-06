@@ -215,26 +215,26 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     }
 
     // --- SIMILARITY THRESHOLD DYNAMIC FILTERING ---
-const thresholdSlider = document.getElementById("similarityRange");
-const thresholdDisplay = document.getElementById("thresholdValue");
+    const thresholdSlider = document.getElementById("similarityRange");
+    const thresholdDisplay = document.getElementById("thresholdValue");
 
-thresholdSlider.addEventListener("input", function () {
-  const visibility = parseFloat(this.value);
-  thresholdDisplay.textContent = visibility.toFixed(2);
+    thresholdSlider.addEventListener("input", function () {
+      const visibility = parseFloat(this.value);
+      thresholdDisplay.textContent = visibility.toFixed(2);
 
-  // Update all links with new visibility and width
-  d3.selectAll(".link")
-    .style("stroke-opacity", d => {
-      // Full opacity at visibility 1, fade to 0 at visibility 0
-      return Math.min(0.6, visibility * 0.6);
-    })
-    .style("stroke-width", function(d) {
-      // Scale width based on visibility value
-      const width = getStrokeWidth(d.similarity) * visibility;
-      return (d.source === newDreamId || d.target === newDreamId) ? 
-        width * 2 : width;
+      // Update all links with new visibility and width
+      d3.selectAll(".link")
+        .style("stroke-opacity", d => {
+          // Full opacity at visibility 1, fade to 0 at visibility 0
+          return Math.min(0.6, visibility * 0.6);
+        })
+        .style("stroke-width", function(d) {
+          // Scale width based on visibility value
+          const width = getStrokeWidth(d.similarity) * visibility;
+          return (d.source === newDreamId || d.target === newDreamId) ? 
+            width * 2 : width;
+        });
     });
-});
 
     // Optional: Hide spinner if it exists
     const preload = document.getElementById("preloadSpinner");
@@ -244,34 +244,52 @@ thresholdSlider.addEventListener("input", function () {
       }, 500);
     }
 
-    // Add after nodes creation
-const searchInput = document.getElementById("dreamSearch");
-if (searchInput) {
-  searchInput.addEventListener("input", function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    
-    // Reset all nodes
-    d3.selectAll(".node")
-      .classed("search-match", false)
-      .attr("fill", d => d.id === newDreamId ? "orange" : "#fff");
-    
-    if (searchTerm.length > 0) {
-      // Find matching nodes
-      const matches = nodes.filter(node => 
-        node.text.toLowerCase().includes(searchTerm)
-      );
-      
-      // Highlight matches
-      d3.selectAll(".node")
-        .filter(d => matches.some(m => m.id === d.id))
-        .classed("search-match", true);
+    // Update the search input handler within the constellation data section
+    const searchInput = document.getElementById("dreamSearch");
+    if (searchInput) {
+      searchInput.addEventListener("input", function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        
+        // Reset all nodes and links
+        d3.selectAll(".node")
+          .classed("search-match", false)
+          .attr("fill", d => d.id === newDreamId ? "orange" : "#fff")
+          .attr("r", d => sizeScale(d.score));
+          
+        d3.selectAll(".link")
+          .style("stroke", "#ccc")
+          .style("stroke-opacity", 0.6)
+          .style("stroke-width", d => getStrokeWidth(d.similarity));
+        
+        if (searchTerm.length > 0) {
+          // Find matching nodes
+          const matches = nodes.filter(node => 
+            node.text.toLowerCase().includes(searchTerm)
+          );
+          
+          // Create a Set of matching node IDs for faster lookup
+          const matchingIds = new Set(matches.map(m => m.id));
+          
+          // Highlight matching nodes
+          d3.selectAll(".node")
+            .filter(d => matchingIds.has(d.id))
+            .classed("search-match", true)
+            .attr("fill", "#00ff00")  // Green color for matches
+            .attr("r", d => sizeScale(d.score) * 1.5);  // Make matching nodes bigger
 
-      // If we have matches, center on the first one
-      if (matches.length > 0) {
-        centerOnDream(matches[0].id);
-        updateSimilarPanel(matches[0].id);
-      }
+          // Only highlight links where both ends are matches
+          d3.selectAll(".link")
+            .filter(d => matchingIds.has(d.source) && matchingIds.has(d.target))
+            .style("stroke", "#00ff00")  // Green color for connected links
+            .style("stroke-opacity", 1)
+            .style("stroke-width", d => getStrokeWidth(d.similarity) * 1.5);
+
+          // If we have matches, center on the first one
+          if (matches.length > 0) {
+            centerOnDream(matches[0].id);
+            updateSimilarPanel(matches[0].id);
+          }
+        }
+      });
     }
-  });
 }
-  }
