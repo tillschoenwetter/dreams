@@ -178,7 +178,7 @@
     document.addEventListener('mousemove', (e) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
-      console.log("mouse moved:", mouseX, mouseY); // 👈 test log
+      // console.log("mouse moved:", mouseX, mouseY); // 👈 test log
     });
   
     window.addEventListener('resize', resizeCanvas);
@@ -192,6 +192,16 @@
     animate();
   </script>
   
+  <!-- Add right before closing </body> tag -->
+  <script>
+    // Ensure spinner is hidden when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      const spinner = document.getElementById("preloadSpinner");
+      if (spinner) {
+          spinner.style.display = "none";
+      }
+    });
+  </script>
 
 </body>
 <footer>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, make_response
 import sqlite3
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
@@ -81,8 +81,13 @@ def index():
             conn.close()
 
             return redirect(url_for('submitted', dream_id=new_dream_id))
-
-    return render_template('index.html', user_dream=None)
+    
+    # Add this line to ensure spinner is hidden on direct visits
+    response = make_response(render_template('index.html', user_dream=None))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @app.route('/submitted/<int:dream_id>')
 def submitted(dream_id):
