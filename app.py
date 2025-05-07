@@ -32,6 +32,75 @@ def init_db():
 
 init_db()
 
+def build_constellation(threshold=DEFAULT_THRESHOLD):
+    conn = sqlite3.connect("dreams.db")
+    c = conn.cursor()
+    c.execute("SELECT id, text, embedding FROM dreams")
+    rows = c.fetchall()
+    conn.close()
+
+    if not rows:
+        return "<h2>No dreams yet. Be the first to submit one!</h2>"
+
+    dream_texts = [preprocess_dream(r[1]) for r in rows]
+    embeddings = [json.loads(r[2]) for r in rows]
+
+    nodes = [{"id": r[0], "text": r[1]} for r in rows]
+    similarity_matrix = util.cos_sim(embeddings, embeddings).cpu().numpy()
+
+    for i, node in enumerate(nodes):
+        sum_sim = sum(float(similarity_matrix[i][j]) for j in range(len(rows)) if i != j)
+        node["score"] = sum_sim
+
+    reducer = umap.UMAP(
+        n_neighbors=15,  # Look at more neighbors
+        min_dist=0.1,    # Allow more spacing
+        spread=1.0,      # Reduce the spread
+        metric='cosine'  # Use same metric as similarity calculation
+    )
+    coords_2d = reducer.fit_transform(embeddings)
+
+    xs, ys = coords_2d[:, 0], coords_2d[:, 1]
+    x_min, x_max = float(xs.min()), float(xs.max())
+    y_min, y_max = float(ys.min()), float(ys.max())
+    width_range = x_max - x_min
+    height_range = y_max - y_min
+
+    scale_factor = 30.0
+    for i, node in enumerate(nodes):
+        norm_x = (xs[i] - x_min) / width_range
+        norm_y = (ys[i] - y_min) / height_range
+        node["x"] = float(norm_x * scale_factor) + random.uniform(-0.1, 0.1)
+        node["y"] = float(norm_y * scale_factor) + random.uniform(-0.1, 0.1)
+
+    links = []
+    threshold = DEFAULT_THRESHOLD
+    for i in range(len(rows)):
+        for j in range(i+1, len(rows)):
+            sim = float(similarity_matrix[i][j])
+            if sim >= threshold:
+                links.append({
+                    "source": rows[i][0],
+                    "target": rows[j][0],
+                    "similarity": sim
+                })
+
+    # Add initial similar dreams data
+    first_dream = rows[0]
+    first_embedding = json.loads(first_dream[2])
+    cosine_scores = util.cos_sim(first_embedding, embeddings)[0]
+    top_similar = [
+        (rows[i][0], rows[i][1], float(cosine_scores[i]))
+        for i in range(len(rows)) if rows[i][0] != first_dream[0]
+    ]
+    top_similar.sort(key=lambda x: x[2], reverse=True)
+    top_similar = top_similar[:4]
+
+    return nodes, links, top_similar
+
+
+
+
 @app.route('/all_dreams')
 def all_dreams():
     conn = sqlite3.connect("dreams.db")
@@ -166,87 +235,101 @@ def submitted(dream_id):
         new_dream_id=dream_id
     )
 
+# @app.route('/explore')
+# def explore():
+#     nodes, links, top_similar = build_constellation()
+    # conn = sqlite3.connect("dreams.db")
+    # c = conn.cursor()
+    # c.execute("SELECT id, text, embedding FROM dreams")
+    # rows = c.fetchall()
+    # conn.close()
+
+    # if not rows:
+    #     return "<h2>No dreams yet. Be the first to submit one!</h2>"
+
+    # dream_texts = [preprocess_dream(r[1]) for r in rows]
+    # embeddings = [json.loads(r[2]) for r in rows]
+
+    # nodes = [{"id": r[0], "text": r[1]} for r in rows]
+    # similarity_matrix = util.cos_sim(embeddings, embeddings).cpu().numpy()
+
+    # for i, node in enumerate(nodes):
+    #     sum_sim = sum(float(similarity_matrix[i][j]) for j in range(len(rows)) if i != j)
+    #     node["score"] = sum_sim
+
+    # reducer = umap.UMAP(
+    #     n_neighbors=15,  # Look at more neighbors
+    #     min_dist=0.1,    # Allow more spacing
+    #     spread=1.0,      # Reduce the spread
+    #     metric='cosine'  # Use same metric as similarity calculation
+    # )
+    # coords_2d = reducer.fit_transform(embeddings)
+
+    # xs, ys = coords_2d[:, 0], coords_2d[:, 1]
+    # x_min, x_max = float(xs.min()), float(xs.max())
+    # y_min, y_max = float(ys.min()), float(ys.max())
+    # width_range = x_max - x_min
+    # height_range = y_max - y_min
+
+    # scale_factor = 30.0
+    # for i, node in enumerate(nodes):
+    #     norm_x = (xs[i] - x_min) / width_range
+    #     norm_y = (ys[i] - y_min) / height_range
+    #     node["x"] = float(norm_x * scale_factor) + random.uniform(-0.1, 0.1)
+    #     node["y"] = float(norm_y * scale_factor) + random.uniform(-0.1, 0.1)
+
+    # links = []
+    # threshold = DEFAULT_THRESHOLD
+    # for i in range(len(rows)):
+    #     for j in range(i+1, len(rows)):
+    #         sim = float(similarity_matrix[i][j])
+    #         if sim >= threshold:
+    #             links.append({
+    #                 "source": rows[i][0],
+    #                 "target": rows[j][0],
+    #                 "similarity": sim
+    #             })
+
+    # # Add initial similar dreams data
+    # first_dream = rows[0]
+    # first_embedding = json.loads(first_dream[2])
+    # cosine_scores = util.cos_sim(first_embedding, embeddings)[0]
+    # top_similar = [
+    #     (rows[i][0], rows[i][1], float(cosine_scores[i]))
+    #     for i in range(len(rows)) if rows[i][0] != first_dream[0]
+    # ]
+    # top_similar.sort(key=lambda x: x[2], reverse=True)
+    # top_similar = top_similar[:4]
+
 @app.route('/explore')
 def explore():
-    conn = sqlite3.connect("dreams.db")
-    c = conn.cursor()
-    c.execute("SELECT id, text, embedding FROM dreams")
-    rows = c.fetchall()
-    conn.close()
-
-    if not rows:
-        return "<h2>No dreams yet. Be the first to submit one!</h2>"
-
-    dream_texts = [preprocess_dream(r[1]) for r in rows]
-    embeddings = [json.loads(r[2]) for r in rows]
-
-    nodes = [{"id": r[0], "text": r[1]} for r in rows]
-    similarity_matrix = util.cos_sim(embeddings, embeddings).cpu().numpy()
-
-    for i, node in enumerate(nodes):
-        sum_sim = sum(float(similarity_matrix[i][j]) for j in range(len(rows)) if i != j)
-        node["score"] = sum_sim
-
-    reducer = umap.UMAP(
-        n_neighbors=15,  # Look at more neighbors
-        min_dist=0.1,    # Allow more spacing
-        spread=1.0,      # Reduce the spread
-        metric='cosine'  # Use same metric as similarity calculation
-    )
-    coords_2d = reducer.fit_transform(embeddings)
-
-    xs, ys = coords_2d[:, 0], coords_2d[:, 1]
-    x_min, x_max = float(xs.min()), float(xs.max())
-    y_min, y_max = float(ys.min()), float(ys.max())
-    width_range = x_max - x_min
-    height_range = y_max - y_min
-
-    scale_factor = 30.0
-    for i, node in enumerate(nodes):
-        norm_x = (xs[i] - x_min) / width_range
-        norm_y = (ys[i] - y_min) / height_range
-        node["x"] = float(norm_x * scale_factor) + random.uniform(-0.1, 0.1)
-        node["y"] = float(norm_y * scale_factor) + random.uniform(-0.1, 0.1)
-
-    links = []
-    threshold = DEFAULT_THRESHOLD
-    for i in range(len(rows)):
-        for j in range(i+1, len(rows)):
-            sim = float(similarity_matrix[i][j])
-            if sim >= threshold:
-                links.append({
-                    "source": rows[i][0],
-                    "target": rows[j][0],
-                    "similarity": sim
-                })
-
-    # Add initial similar dreams data
-    first_dream = rows[0]
-    first_embedding = json.loads(first_dream[2])
-    cosine_scores = util.cos_sim(first_embedding, embeddings)[0]
-    top_similar = [
-        (rows[i][0], rows[i][1], float(cosine_scores[i]))
-        for i in range(len(rows)) if rows[i][0] != first_dream[0]
-    ]
-    top_similar.sort(key=lambda x: x[2], reverse=True)
-    top_similar = top_similar[:4]
-
+    nodes, links, top_similar = build_constellation()
     return render_template(
-        'index.html',
-        user_dream="explore",
-        top_similar=top_similar,  # Add this line
+        'index.html',          # pagina con form/constellazione
+        user_dream="explore",  # (serve al template)
         nodes=nodes,
         links=links,
+        top_similar=top_similar,
         new_dream_id=None
     )
+
 
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
 
-@app.route('/telescope')
+@app.route("/telescope")
 def telescope():
-    return render_template('telescope.html')
+    nodes, links, top_similar = build_constellation()
+    # note: we’re feeding the real data, not empty lists
+    return render_template(
+        "telescope.html",
+        nodes=nodes,
+        links=links,
+        new_dream_id=None,
+        top_similar=[]
+    )
+
 
 if __name__ == '__main__':
     app.run(debug=True)

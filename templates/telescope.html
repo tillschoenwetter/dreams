@@ -6,57 +6,40 @@
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="icon" href="{{ url_for('static', filename='imgs/favicon.svg') }}">
-
   <style>
+    .body {
+      background: black;
+    }
     body.loading {
       cursor: progress;
+    }
+    .circular-viewport {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 90vmin;
+      height: 90vmin;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 0 0 9999px black;
+      background: black;
     }
   </style>
 </head>
 <body>
-  <canvas id="star-canvas" tabindex="-1"></canvas> <!-- canvas containing bg stars-->
-  <!-- <div class="header">
-    <a href="about.html">About</a>
-  </div> -->
-  {% if not user_dream %}
-    <!-- Input view -->
-    <div class="input-container">
-      <!-- Flask is a lil bitch and cannot accept static file in the traditional way, so u need to use url_for -->
-      <img src="{{ url_for('static', filename='imgs/DreamAtlas_logo.svg') }}" alt="DreamAtlas Logo">
-      <form method="post" id="dreamForm">
-        <div class="dream-box">
-          <textarea name="dream" placeholder="Describe your dream..."></textarea>
-        </div>
-        <br>
-        <div class="buttons">
-          <button type="submit">Submit Dream</button>
-          <button type="button" data-explore style="margin-top: 10px;">Explore Dreams</button>
-        </div>
-      </form>
-    </div>
-  {% else %}
-    <!-- Constellation view -->
+  <div class="circle-container">
+    <!-- Only the constellation container is visible -->
     <div class="constellation-container">
       <div class="header">
-        <!-- Add search input -->
-        <div class="search-container">
-          <input type="text" id="dreamSearch" placeholder="Search dreams..." />
-        </div>
-
-        <!-- Existing threshold slider -->
-        <div class="threshold-slider">
+        <!-- <div class="threshold-slider">
           <label for="similarityRange">Constellation Visibility: <span id="thresholdValue">0.35</span></label>
           <input type="range" min="0.0" max="1.0" step="0.01" value="0.50" id="similarityRange" />
-        </div>
-
-        <button onclick="window.location.href='/'">Submit Another Dream</button>
-        <p style="font-size:12px; text-align:center; margin-top:5px;"> 
-          for feedback or questions, please contact us at hello@dreamatlas.cloud
-        </p>
+        </div> -->
       </div>
 
-      <!-- Similar dreams panel - removed if condition -->
-      <div class="similar-panel" id="similarPanel">
+      <!-- Similar dream panel -->
+      <!-- <div class="similar-panel-TS" id="similarPanelTS">
         <div class="similar-panel-header" id="similarPanelHeader">
           <span>Most Similar Dreams</span>
           <span id="toggleButton">–</span>
@@ -70,140 +53,36 @@
             {% endfor %}
           </ul>
         </div>
-      </div>
+      </div> -->
 
       <svg id="constellation"></svg>
       <div id="tooltip" class="tooltip" style="display: none;"></div>
 
-      <!-- Constellation data -->
       <script>
         var nodes = {{ nodes|tojson }};
         var links = {{ links|tojson }};
         var newDreamId = {{ new_dream_id|tojson }};
       </script>
-      <script src="{{ url_for('static', filename='script.js') }}"></script>
+      <script src="{{ url_for('static', filename='telescope.js') }}"></script>
     </div>
-  {% endif %}
 
-  <!-- Spinner overlay always present -->
-  <div id="preloadSpinner" class="spinner-overlay" style="display: none;">
-    <div class="spinner"></div>
+    <!-- Spinner overlay -->
+    <div id="preloadSpinner" class="spinner-overlay" style="display: none;">
+      <div class="spinner"></div>
+    </div>
   </div>
 
-  <!-- Spinner + location logic -->
-  <script>
-    const spinner = document.getElementById("preloadSpinner");
-    const formEl = document.getElementById("dreamForm");
 
-    // Show spinner on form submission
-    if (formEl) {
-      formEl.addEventListener("submit", function() {
-        spinner.style.display = "flex";
-        const locField = document.createElement("input");
-        locField.type = "hidden";
-        locField.name = "location";
-        locField.value = Intl.DateTimeFormat().resolvedOptions().timeZone; // Use timezone instead
-        formEl.appendChild(locField);
-      });
-    }
 
-    // Show spinner immediately on Explore click
-    const exploreBtn = document.querySelector("button[data-explore]");
-    if (exploreBtn) {
-      exploreBtn.addEventListener("click", function() {
-        spinner.style.display = "flex";
-        window.location.href = "/explore";
-      });
-    }
-  </script>
-  
-  <script> // BACKGROUND STAR FUNCTION!!!
-    const canvas = document.getElementById('star-canvas');
-    const ctx = canvas.getContext('2d');
-    let stars = []; 
-    let interactableStars = []; 
-    const numStars = 200; // NUMBER OF STARS IN BG
-    const numInteractable = 50; // NUMBER OF STARS THAT ACTUALLY MAKE LINES
-    let mouseX = -1000, mouseY = -1000;
-  
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      generateStars(); 
-    }
-  
-    function generateStars() {
-      stars = [];
-      interactableStars = [];
-      for (let i = 0; i < numStars; i++) {
-        const star = {
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          radius: Math.random() * 1.5 + 0.2, // CHANGE RADIUS OF STARS
-          opacity: Math.random() * 0.6 + 0.2 // CHAGE OPACITY OF STARS
-        };
-        stars.push(star);
-      }
-      interactableStars = [...stars].sort((a, b) => b.opacity - a.opacity).slice(0, numInteractable);
-    }
-  
-    function drawStars() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (const star of stars) {
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
-        ctx.fill();
-      }
-      drawConnections();
-    }
-  
-    function drawConnections() {
-      const threshold = 250; // DISTANCE FOR CREATING CONNECTION
-      for (const star of interactableStars) {
-        const dx = star.x - mouseX;
-        const dy = star.y - mouseY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < threshold) {
-          ctx.beginPath();
-          ctx.moveTo(mouseX, mouseY);
-          ctx.lineTo(star.x, star.y);
-          ctx.strokeStyle = `rgba(255, 255, 255, ${(1 - distance / threshold).toFixed(2)})`;
-          ctx.lineWidth = 0.8;
-          ctx.stroke();
-        }
-      }
-    }
-  
-    document.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    });
-  
-    window.addEventListener('resize', resizeCanvas);
-  
-    function animate() {
-      drawStars();
-      requestAnimationFrame(animate);
-    }
-  
-    resizeCanvas();
-    animate();
-  </script>
-  
-  <!-- Add right before closing </body> tag -->
+
   <script>
-    // Ensure spinner is hidden when page loads
     document.addEventListener('DOMContentLoaded', function() {
       const spinner = document.getElementById("preloadSpinner");
-      if (spinner) {
-          spinner.style.display = "none";
-      }
+      if (spinner) spinner.style.display = "none";
     });
   </script>
-
 </body>
-<footer class="{{ 'landing-footer' if not user_dream else 'hidden' }}"> <!-- checking if the dream -->
+<footer class="hidden">
   <div class="horizon"></div>
 </footer>
 </html>
