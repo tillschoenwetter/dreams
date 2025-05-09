@@ -55,6 +55,109 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         container.attr("transform", d3.event.transform);
       });
     svg.call(zoom);
+
+    // HI EMMA CHECK THIS OUT
+
+    // Add after the svg.call(zoom) line
+    let currentTransform = d3.zoomIdentity;
+    const MOVE_SPEED = 30;  // Adjust this value to control movement speed
+    const ZOOM_SPEED = 0.1; // Adjust this value to control zoom speed
+
+    // Add keyboard controls
+    document.addEventListener('keydown', function(event) {
+        // Get current transform values
+        currentTransform = d3.zoomTransform(svg.node());
+        let tx = currentTransform.x;
+        let ty = currentTransform.y;
+        let k = currentTransform.k;
+
+        switch(event.key) {
+            case 'ArrowLeft':
+                tx += MOVE_SPEED;
+                break;
+            case 'ArrowRight':
+                tx -= MOVE_SPEED;
+                break;
+            case 'ArrowUp':
+                ty += MOVE_SPEED;
+                break;
+            case 'ArrowDown':
+                ty -= MOVE_SPEED;
+                break;
+            // Add zoom controls with + and - keys
+            case '+':
+            case '=':  // Common binding for + without shift
+                k *= (1 + ZOOM_SPEED);
+                break;
+            case '-':
+            case '_':  // Common binding for - without shift
+                k *= (1 - ZOOM_SPEED);
+                break;
+        }
+
+        // Apply the new transform
+        const newTransform = d3.zoomIdentity
+            .translate(tx, ty)
+            .scale(k);
+        
+        svg.transition()
+            .duration(100)
+            .call(zoom.transform, newTransform);
+    });
+
+    // Add gamepad support
+    function setupGamepad() {
+        let animationFrameId;
+        
+        function handleGamepad() {
+            const gamepads = navigator.getGamepads();
+            if (!gamepads[0]) return;
+            
+            const gamepad = gamepads[0];
+            currentTransform = d3.zoomTransform(svg.node());
+            let tx = currentTransform.x;
+            let ty = currentTransform.y;
+            let k = currentTransform.k;
+            
+            // Horizontal movement (left stick X axis)
+            if (Math.abs(gamepad.axes[0]) > 0.1) {
+                tx -= gamepad.axes[0] * MOVE_SPEED;
+            }
+            
+            // Vertical movement (left stick Y axis)
+            if (Math.abs(gamepad.axes[1]) > 0.1) {
+                ty -= gamepad.axes[1] * MOVE_SPEED;
+            }
+            
+            // Zoom (right stick Y axis or triggers)
+            const zoomValue = (gamepad.buttons[7].value - gamepad.buttons[6].value);
+            if (Math.abs(zoomValue) > 0.1) {
+                k *= (1 + (zoomValue * ZOOM_SPEED));
+            }
+            
+            // Apply the new transform
+            const newTransform = d3.zoomIdentity
+                .translate(tx, ty)
+                .scale(k);
+            
+            svg.call(zoom.transform, newTransform);
+            
+            animationFrameId = requestAnimationFrame(handleGamepad);
+        }
+        
+        window.addEventListener("gamepadconnected", function(e) {
+            console.log("Gamepad connected:", e.gamepad.id);
+            handleGamepad();
+        });
+        
+        window.addEventListener("gamepaddisconnected", function(e) {
+            console.log("Gamepad disconnected");
+            cancelAnimationFrame(animationFrameId);
+        });
+    }
+
+    // Initialize gamepad support
+    setupGamepad();
   
     const xScale = d3.scaleLinear().domain([0, 30]).range([0, width]);
     const yScale = d3.scaleLinear().domain([0, 30]).range([0, height]);
