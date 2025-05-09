@@ -43,7 +43,32 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         .on("zoom", function () {
             container.attr("transform", d3.event.transform);
         });
+    // Enable only scroll-based zoom; disable dragging and double-click zoom
     svg.call(zoom);
+    let currentTransform = d3.zoomIdentity;
+    const MOVE_SPEED = 30;
+    const ZOOM_SPEED = 0.1;
+
+    document.addEventListener('keydown', function(event) {
+        currentTransform = d3.zoomTransform(svg.node());
+        let tx = currentTransform.x;
+        let ty = currentTransform.y;
+        let k = currentTransform.k;
+
+        switch(event.key) {
+            case 'ArrowLeft': tx += MOVE_SPEED; break;
+            case 'ArrowRight': tx -= MOVE_SPEED; break;
+            case 'ArrowUp': ty += MOVE_SPEED; break;
+            case 'ArrowDown': ty -= MOVE_SPEED; break;
+            case '+':
+            case '=': k *= (1 + ZOOM_SPEED); break;
+            case '-':
+            case '_': k *= (1 - ZOOM_SPEED); break;
+        }
+
+        const newTransform = d3.zoomIdentity.translate(tx, ty).scale(k);
+        svg.transition().duration(100).call(zoom.transform, newTransform);
+    });
 
     const xScale = d3.scaleLinear().domain([0, 30]).range([0, width]);
     const yScale = d3.scaleLinear().domain([0, 30]).range([0, height]);
@@ -192,4 +217,5 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
             preload.style.display = "none";
         }, 500);
     }
+
 }
