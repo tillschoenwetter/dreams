@@ -1,24 +1,34 @@
-// Replace the existing pageshow event listener with this updated version
+// ---------------------------
+// DreamAtlas Telescope View
+// Full constellation script with center preview
+// ---------------------------
+
+
+let dreamMode = false;      // false = nessun modal aperto
+let currentDream = null;    // dato del sogno attivo
+const dreamModal = d3.select('#dreamModal');
+
+
+// Hide spinner on page (re)show
 window.addEventListener('pageshow', function(event) {
     const spinner = document.getElementById("preloadSpinner");
     if (spinner) spinner.style.display = "none";
 });
-
 window.addEventListener('unload', function() {
     const spinner = document.getElementById("preloadSpinner");
     if (spinner) spinner.style.display = "none";
 });
-
 window.addEventListener('popstate', function() {
     const spinner = document.getElementById("preloadSpinner");
     if (spinner) spinner.style.display = "none";
 });
 
+// Ensure data is present before initializing
 if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
+    // DOM references for similar panel (optional)
     const panelHeader = document.getElementById("similarPanelHeader");
     const panelContent = document.getElementById("similarPanelContent");
     const toggleButton = document.getElementById("toggleButton");
-
     if (panelHeader && panelContent && toggleButton) {
         panelHeader.addEventListener("click", function () {
             const isOpen = panelContent.style.display !== "none";
@@ -27,28 +37,30 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         });
     }
 
+    // Get container dimensions (circle-container)
     const containerElement = document.querySelector('.circle-container');
     const width = containerElement ? containerElement.offsetWidth : window.innerWidth;
     const height = containerElement ? containerElement.offsetHeight : window.innerHeight;
 
+    // Set up SVG and zoom group
     const svg = d3.select("#constellation")
         .attr("width", width)
         .attr("height", height);
-
     const container = svg.append("g");
 
-    // Set up zoom and pan behavior
+    // Zoom setup
     const zoom = d3.zoom()
         .scaleExtent([0.005, 20])
         .on("zoom", function () {
             container.attr("transform", d3.event.transform);
+            updateCenterPreview();
         });
-    // Enable only scroll-based zoom; disable dragging and double-click zoom
     svg.call(zoom);
-    let currentTransform = d3.zoomIdentity;
+
+    // Keyboard controls for navigation
+    let currentTransform = d3.zoomTransform(svg.node());
     const MOVE_SPEED = 30;
     const ZOOM_SPEED = 0.1;
-
     document.addEventListener('keydown', function(event) {
         currentTransform = d3.zoomTransform(svg.node());
         let tx = currentTransform.x;
@@ -68,45 +80,34 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
 
         const newTransform = d3.zoomIdentity.translate(tx, ty).scale(k);
         svg.transition().duration(100).call(zoom.transform, newTransform);
+        updateCenterPreview();
     });
 
+    // Scales for positioning nodes
     const xScale = d3.scaleLinear().domain([0, 30]).range([0, width]);
     const yScale = d3.scaleLinear().domain([0, 30]).range([0, height]);
 
+    // Stroke width for links (based on similarity)
     function getStrokeWidth(similarity) {
-        if (similarity < 0.7) {
-            const clamped = Math.max(0.5, similarity);
-            return 0.01 + ((clamped - 0.5) / 0.2) * (0.1 - 0.001);
-        } else {
-            return 0.1 + ((similarity - 0.7) / 0.3) * (3 - 0.1);
-        }
+        return similarity < 0.7
+            ? 0.01 + ((Math.max(0.5, similarity) - 0.5) / 0.2) * (0.1 - 0.001)
+            : 0.1 + ((similarity - 0.7) / 0.3) * (3 - 0.1);
     }
 
-    // This function centers the SVG view on the selected dream node using D3 zoom transforms
+    // Center camera on a node
     function centerOnDream(dreamId) {
-        const targetNode = nodes.find(n => n.id === dreamId);
-        if (!targetNode) return;
-
-        const targetX = xScale(targetNode.x);
-        const targetY = yScale(targetNode.y);
-        const currentTransform = d3.zoomTransform(svg.node());
-        const currentScale = currentTransform.k;
-
-        const centerX = width / 2;
-        const centerY = height / 2;
-
-        const tx = centerX - targetX * currentScale;
-        const ty = centerY - targetY * currentScale;
-
+        const target = nodes.find(n => n.id === dreamId);
+        if (!target) return;
+        const tx = width / 2 - xScale(target.x) * currentTransform.k;
+        const ty = height / 2 - yScale(target.y) * currentTransform.k;
         svg.transition().duration(750)
-            .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(currentScale));
+           .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(currentTransform.k));
     }
 
-    window.panelClick = function (dreamId) {
-        centerOnDream(dreamId);
-    };
+    // Tooltip display
+    const tooltip = d3.select("#tooltip");
 
-    // Draw connections (links) between dreams
+    // Draw dream links
     const link = container.append("g")
         .attr("class", "links")
         .selectAll("line")
@@ -114,40 +115,28 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         .enter().append("line")
         .attr("class", "link")
         .style("stroke", "#ccc")
-        .style("stroke-width", function (d) {
-            const baseWidth = getStrokeWidth(d.similarity);
-            return (d.source === newDreamId || d.target === newDreamId) ? baseWidth * 2 : baseWidth;
+        .style("stroke-width", d => {
+            const w = getStrokeWidth(d.similarity);
+            return (d.source === newDreamId || d.target === newDreamId) ? w * 2 : w;
         })
-        .on("click", function (d) {
-            const sourceNode = nodes.find(n => n.id === d.source);
-            const targetNode = nodes.find(n => n.id === d.target);
-            const sourceX = xScale(sourceNode.x), sourceY = yScale(sourceNode.y);
-            const targetX = xScale(targetNode.x), targetY = yScale(targetNode.y);
-            const centerX = width / 2;
-            const centerY = height / 2;
-            const distSource = Math.hypot(sourceX - centerX, sourceY - centerY);
-            const distTarget = Math.hypot(targetX - centerX, targetY - centerY);
-            const chosen = distSource > distTarget ? sourceNode : targetNode;
-            const chosenX = xScale(chosen.x), chosenY = yScale(chosen.y);
-            const currentTransform = d3.zoomTransform(svg.node());
-            const currentScale = currentTransform.k;
-            const tx = centerX - chosenX * currentScale;
-            const ty = centerY - chosenY * currentScale;
-            svg.transition().duration(750)
-                .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(currentScale));
+        .on("click", d => {
+            const src = nodes.find(n => n.id === d.source);
+            const tgt = nodes.find(n => n.id === d.target);
+            const cx = width / 2;
+            const cy = height / 2;
+            const closer = Math.hypot(xScale(src.x) - cx, yScale(src.y) - cy) > Math.hypot(xScale(tgt.x) - cx, yScale(tgt.y) - cy) ? tgt : src;
+            centerOnDream(closer.id);
         });
 
+    // Node size scale
     const scoreExtent = d3.extent(nodes, d => d.score);
     if (scoreExtent[0] === scoreExtent[1]) {
         scoreExtent[0] *= 0.9;
         scoreExtent[1] *= 1.1;
     }
+    const sizeScale = d3.scalePow().exponent(2).domain(scoreExtent).range([0.1, 3]);
 
-    // Render the dream nodes as circles
-    const sizeScale = d3.scalePow().exponent(2)
-        .domain(scoreExtent)
-        .range([0.1, 3]);
-
+    // Draw nodes (dreams as circles)
     container.append("g")
         .attr("class", "nodes")
         .selectAll("circle")
@@ -157,65 +146,82 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         .attr("cx", d => xScale(d.x))
         .attr("cy", d => yScale(d.y))
         .attr("r", d => sizeScale(d.score))
-        .attr("fill", d => d.id === newDreamId ? "orange" : "#fff")
+        .attr("fill", "#fff")
         .on("click", d => {
-            centerOnDream(d.id);
+            centerOnDream(d.id);   // keeps your centring logic
+            toggleDreamModal(d);   // new open/close behaviour
+        })
 
-            const dreamBox = document.getElementById("tooltip"); // originally called 'tooltip' in the desktop version
-            if (dreamBox) {
-                dreamBox.style.display = "block";
-                dreamBox.innerHTML = `<strong>Dream ${d.id}:</strong><br>${d.text}`;
-
-                // Set fixed size for the dream box
-                dreamBox.style.width = "300px";
-                dreamBox.style.height = "auto";
-                dreamBox.style.maxHeight = "200px";
-                dreamBox.style.overflowY = "auto";
-                dreamBox.style.left = `${width / 2}px`; // fixed horizontally to center
-                dreamBox.style.top = `${height / 2}px`; // fixed vertically to center + 80px
-            }
-        });
-
-    link
-        .attr("x1", d => xScale(nodes.find(n => n.id === d.source).x))
+    // Position links based on node positions
+    link.attr("x1", d => xScale(nodes.find(n => n.id === d.source).x))
         .attr("y1", d => yScale(nodes.find(n => n.id === d.source).y))
         .attr("x2", d => xScale(nodes.find(n => n.id === d.target).x))
         .attr("y2", d => yScale(nodes.find(n => n.id === d.target).y));
+    
+    // ────────────────────────────────────────────────────────────────
+    // ONE persistent modal + toggling via "single-click" scheme
+    // ────────────────────────────────────────────────────────────────
+    const dreamModal  = d3.select("#dreamModal");
+    let openDreamId   = null;                 // remembers if a dream is open
+    let closeListener = null;                 // will hold the once() handler
 
-    // Auto-center on newly submitted dream if applicable
-    const newDream = nodes.find(n => n.id === newDreamId);
-    if (newDream) {
-        const dreamX = xScale(newDream.x);
-        const dreamY = yScale(newDream.y);
-        const initialScale = 5;
+    function toggleDreamModal(d){
+
+        // A.  If a modal is already open ⇒ close it and return
+        if(openDreamId !== null){                 
+         dreamModal.style("display","none").html("");
+          openDreamId = null;
+
+           // remove the global one-off listener
+           d3.select(window).on("click.modal", null);
+           return;                             
+        }
+
+      // B.  Otherwise open *this* dream
+       openDreamId = d.id;
+      dreamModal
+        .html(`<h3 style="margin-top:0;">Dream ${d.id}</h3><p>${d.text}</p>`)
+        .style("display","block");
+
+        /* -----------------------------------------------
+        Attach ONE temporary listener that waits for
+        the very next click ANYWHERE, then closes the
+        modal (and removes itself).  Namespacing the
+        event ('click.modal') keeps it independent of
+        other click handlers.
+        -------------------------------------------------*/
+        d3.select(window).on("click.modal", () => {
+            dreamModal.style("display","none").html("");
+            openDreamId = null;
+            d3.select(window).on("click.modal", null);   // detach
+        }, true);   // ← capture phase so it fires before svg/node handlers
+    }
+
+     // --- Center preview box (HUD-style)
+    const previewBox = d3.select("body").append("div")
+        .attr("id", "centerPreview")
+        .style("display", "none");
+    // --- Dynamic center preview HUD ---
+    function updateCenterPreview() {
+        const transform = d3.zoomTransform(svg.node());
         const centerX = width / 2;
         const centerY = height / 2;
-        const tx = centerX - dreamX * initialScale;
-        const ty = centerY - dreamY * initialScale;
-        svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(initialScale));
+        let closestNode = null;
+        let minDist = Infinity;
+        for (const node of nodes) {
+            const nodeX = xScale(node.x) * transform.k + transform.x;
+            const nodeY = yScale(node.y) * transform.k + transform.y;
+            const dx = nodeX - centerX;
+            const dy = nodeY - centerY;
+            const dist = dx * dx + dy * dy;
+            if (dist < minDist) {
+                minDist = dist;
+                closestNode = node;
+            }
+        }
+        if (closestNode) {
+            previewBox.style("display", "block")
+                      .html(`<strong>Dream ${closestNode.id}:</strong> ${closestNode.text.slice(0, 150)}...`);
+        }
     }
-
-    // Adjust visibility of links based on threshold slider
-    const thresholdSlider = document.getElementById("similarityRange");
-    const thresholdDisplay = document.getElementById("thresholdValue");
-
-    thresholdSlider.addEventListener("input", function () {
-        const visibility = parseFloat(this.value);
-        thresholdDisplay.textContent = visibility.toFixed(2);
-
-        d3.selectAll(".link")
-            .style("stroke-opacity", d => Math.min(0.6, visibility * 0.6))
-            .style("stroke-width", function(d) {
-                const width = getStrokeWidth(d.similarity) * visibility;
-                return (d.source === newDreamId || d.target === newDreamId) ? width * 2 : width;
-            });
-    });
-
-    const preload = document.getElementById("preloadSpinner");
-    if (preload) {
-        setTimeout(() => {
-            preload.style.display = "none";
-        }, 500);
-    }
-
-}
+} // end if data is defined

@@ -155,7 +155,7 @@ button {
   overflow: hidden;
 }
 .similar-panel-header {
-  padding: 5px 10px;
+  /* padding: 5px 10px; */
   background: #222;
   cursor: pointer;
   display: flex;
@@ -177,7 +177,7 @@ svg {
   background: #000;
 }
 .node { cursor: pointer; }
-.link { stroke-opacity: 0.6; }
+.link { stroke-opacity: 0.3; }
 .tooltip {
   position: absolute;
   text-align: left;
@@ -269,7 +269,7 @@ footer {
 }
 
 
-/* ———— Telescope ————— */
+/* ————————————————— Telescope ———————————————— */
 .circle-container {
   position: fixed;
   top: 50%;
@@ -282,6 +282,151 @@ footer {
   background: black;
   z-index: 1;
 }
+/* ─── center crosshair ─── */
+#centerCross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;          /* total span of the cross */
+  height: 20px;
+  transform: translate(-50%, -50%);
+  pointer-events: none; /* let clicks/drag go “through” */
+  z-index: 100;         /* above your constellation */
+}
+
+/* horizontal & vertical bar */
+#centerCross::before,
+#centerCross::after {
+  content: "";
+  position: absolute;
+  background: #fff;     /* white cross; tweak as you like */
+}
+
+/* horizontal line */
+#centerCross::before {
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;          /* thickness */
+  transform: translateY(-50%);
+}
+
+/* vertical line */
+#centerCross::after {
+  left: 50%;
+  top: 0;
+  width: 1px;           /* thickness */
+  height: 100%;
+  transform: translateX(-50%);
+}
+/* ───── */
+
+#centerPreview {
+    /* positioning */
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+
+    /* look & feel */
+  max-width: 70vw;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font: 13px/1.4 "Helvetica Neue", Arial, sans-serif;
+  text-align: center;
+  width: 30%;
+/*transform: translateY(30%);*/
+
+    /* hidden by default */
+  display: none;
+  pointer-events: none;          /* so clicks pass through */
+}
+
+/* helper class you toggle from JS */
+#centerPreview.shown {
+  display: block;
+  /* optional: fade-in animation */
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
 /* .similar-panel-TS {
   /* z-index: 10; 
 } */
+
+ /*──────────────────────── HUD dream Preview ────────────────────────*/
+/* HUD che appare in basso al centro dello schermo */
+#centerPreview{
+  position: absolute;
+  bottom: 120px;          /* ← era 30px  (più in alto) */
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: rgba(0,0,0,.70);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 10px;
+
+  max-width: 30vw;       /* ← era 70vw  (più stretta) */
+  text-align: center;
+  font: 13px/1.4 "Helvetica Neue", Arial, sans-serif;
+  pointer-events: none;
+  z-index: 1000;
+
+  display: none;
+}
+
+
+
+ /*──────────────────────── Full dream modal ────────────────────────*/
+#dreamModal{
+  position: fixed;                 /* ↳ stays put on screen          */
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);/* ↳ perfectly centred            */
+
+  max-width: 70vw; max-height: 65vh;
+  padding: 22px 28px;
+  overflow-y: auto;
+
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  font: 14px/1.45 "Helvetica Neue", Arial, sans-serif;
+  border-radius: 14px;
+  box-shadow: 0 0 40px rgba(0,0,0,.55);
+
+  display: none;                   /* hidden by default              */
+  z-index: 500;                   /* above everything else          */
+  pointer-events: all;             /* accept clicks (for close btn)  */
+}
+
+/* optional close button inside the box */
+#dreamModal .closeBtn{
+  position: absolute;
+  top: 6px; right: 10px;
+  font-size: 24px; line-height: 18px;
+  cursor: pointer;
+}
+/*  --- add to your style.css ---  */
+#dreamModal{
+  /* position: fixed;             fixed to viewport */
+  /* top: 50%; */
+  /* left: 50%; */
+  /* transform: translate(-50%,-50%);   real centring */
+  max-width: 70vmin;           /* size that fits the telescope */
+  max-height: 70vmin;
+  overflow: auto;              /* scroll if text is long */
+  padding: 20px;
+  border-radius: 14px;
+  background: rgba(0,0,0,.85);
+  color:#fff;
+  font: 14px/1.4 "Helvetica Neue",Arial,sans-serif;
+  z-index: 600;               /* above everything */
+  display:none;                /* hidden by default */
+}
