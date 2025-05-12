@@ -25,24 +25,28 @@
     <div class="constellation-container">
       <svg id="constellation"></svg>
     </div>
+    <div id="dreamModal"></div>
     <div id="tooltip" class="tooltip" style="display: none;"></div>
-
+    <div id="centerPreview"></div>
+    
       <script>
         var nodes = {{ nodes|tojson }};
         var links = {{ links|tojson }};
         var newDreamId = {{ new_dream_id|tojson }};
       </script>
       <script src="{{ url_for('static', filename='telescope.js') }}"></script>
+      
     </div>
 
     <!-- Spinner overlay -->
     <div id="preloadSpinner" class="spinner-overlay" style="display: none;">
       <div class="spinner"></div>
     </div>
-  </div>
-  <div id="centerPreview"></div>
-<!--  Full-text modal  -->
-<div id="dreamModal"></div>
+
+
+
+  <!--  Full-text modal  -->
+
 
 
   <script>

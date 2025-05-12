@@ -4,9 +4,8 @@
 // ---------------------------
 
 
-let dreamMode = false;      // false = nessun modal aperto
-let currentDream = null;    // dato del sogno attivo
-const dreamModal = d3.select('#dreamModal');
+let dreamMode = false;      // false = no modal is open
+let currentDream = null;    // data from the current active dream
 
 
 // Hide spinner on page (re)show
@@ -179,17 +178,10 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
 
       // B.  Otherwise open *this* dream
        openDreamId = d.id;
-      dreamModal
-        .html(`<h3 style="margin-top:0;">Dream ${d.id}</h3><p>${d.text}</p>`)
+        dreamModal.html(`<h3 style="margin-top:0;">Dream ${d.id}</h3><p>${d.text}</p>`)
         .style("display","block");
+        previewBox.style("display","none");
 
-        /* -----------------------------------------------
-        Attach ONE temporary listener that waits for
-        the very next click ANYWHERE, then closes the
-        modal (and removes itself).  Namespacing the
-        event ('click.modal') keeps it independent of
-        other click handlers.
-        -------------------------------------------------*/
         d3.select(window).on("click.modal", () => {
             dreamModal.style("display","none").html("");
             openDreamId = null;
@@ -197,11 +189,8 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         }, true);   // ← capture phase so it fires before svg/node handlers
     }
 
-     // --- Center preview box (HUD-style)
-    const previewBox = d3.select("body").append("div")
-        .attr("id", "centerPreview")
-        .style("display", "none");
-    // --- Dynamic center preview HUD ---
+     // Center preview box (HUD-style) 
+    const previewBox = d3.select("#centerPreview");
     function updateCenterPreview() {
         const transform = d3.zoomTransform(svg.node());
         const centerX = width / 2;
