@@ -287,21 +287,18 @@ footer {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 30px;          /* total span of the cross */
-  height: 30px;
+  width: 80px;          /* how big is the cross */
+  height: 80px;
   transform: translate(-50%, -50%);
   pointer-events: none; /* let clicks/drag go “through” */
   z-index: 100;         /* above your constellation */
 }
-
-/* horizontal & vertical bar */
 #centerCross::before,
 #centerCross::after {
   content: "";
   position: absolute;
   background: #fff;     /* white cross; tweak as you like */
 }
-
 /* horizontal line */
 #centerCross::before {
   top: 50%;
@@ -342,11 +339,10 @@ footer {
 }
 
 /* helper class you toggle from JS */
-#centerPreview.shown {
+/* #centerPreview.shown {
   display: block;
-  /* optional: fade-in animation */
   animation: fadeIn 1s ease-out;
-}
+} */
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translate(-50%, 10px); }
@@ -366,7 +362,7 @@ footer {
   transform: translateX(-50%);
   background: rgba(0,0,0,.70);
   color: #fff;
-  padding: 8px 12px;
+  padding: 20px;
   border-radius: 10px;
   max-width: 30vw;       /* ← era 70vw  (più stretta) */
   text-align: center;
@@ -383,13 +379,13 @@ footer {
   position: fixed;                 /* ↳ stays put on screen          */
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  max-width: 70vw; max-height: 40vh;
+  max-width: 50vw; max-height: 50vh;
   padding: 20px;
   overflow: auto;
 
   background: rgba(0,0,0,0.85);
   color: #fff;
-  font: 14px/1.45 "Helvetica Neue", Arial, sans-serif;
+  font: 16px/1.45 "Helvetica Neue", Arial, sans-serif;
   border-radius: 14px;
   box-shadow: 0 0 40px rgba(0,0,0,.55);
   display: none;                   /* hidden by default              */

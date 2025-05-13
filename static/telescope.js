@@ -6,7 +6,7 @@
 
 let dreamMode = false;      // false = no modal is open
 let currentDream = null;    // data from the current active dream
-
+let userIsNavigating = false;
 
 // Hide spinner on page (re)show
 window.addEventListener('pageshow', function(event) {
@@ -57,15 +57,26 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     svg.call(zoom);
 
     // Keyboard controls for navigation
-    let currentTransform = d3.zoomTransform(svg.node());
-    const MOVE_SPEED = 30;
-    const ZOOM_SPEED = 0.1;
     document.addEventListener('keydown', function(event) {
         currentTransform = d3.zoomTransform(svg.node());
         let tx = currentTransform.x;
         let ty = currentTransform.y;
         let k = currentTransform.k;
-
+    
+        const MOVE_SPEED = 30;
+        const ZOOM_SPEED = 0.1;
+    
+        // Set navigating to true
+        userIsNavigating = true;
+    
+        // Optional: close the modal if it's open
+        if (openDreamId !== null) {
+            dreamModal.style("display", "none").html("");
+            openDreamId = null;
+            d3.select(window).on("click.modal", null);
+        }
+    
+        // Movement / zoom
         switch(event.key) {
             case 'ArrowLeft': tx += MOVE_SPEED; break;
             case 'ArrowRight': tx -= MOVE_SPEED; break;
@@ -75,12 +86,22 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
             case '=': k *= (1 + ZOOM_SPEED); break;
             case '-':
             case '_': k *= (1 - ZOOM_SPEED); break;
+            default:
+                return; // Don't do anything if another key is pressed
         }
-
+    
         const newTransform = d3.zoomIdentity.translate(tx, ty).scale(k);
         svg.transition().duration(100).call(zoom.transform, newTransform);
         updateCenterPreview();
+    
+        // Reset navigating after a short pause
+        clearTimeout(window.navigationTimeout);
+        window.navigationTimeout = setTimeout(() => {
+            userIsNavigating = false;
+        }, 500); // 0.5 sec pause resets the flag
     });
+    
+    
 
     // Scales for positioning nodes
     const xScale = d3.scaleLinear().domain([0, 30]).range([0, width]);
@@ -157,17 +178,14 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         .attr("x2", d => xScale(nodes.find(n => n.id === d.target).x))
         .attr("y2", d => yScale(nodes.find(n => n.id === d.target).y));
     
-    // ────────────────────────────────────────────────────────────────
     // ONE persistent modal + toggling via "single-click" scheme
-    // ────────────────────────────────────────────────────────────────
     const dreamModal  = d3.select("#dreamModal");
     let openDreamId   = null;                 // remembers if a dream is open
-    let closeListener = null;                 // will hold the once() handler
-
+    // let closeListener = null;                 // will hold the once() handler ??????
     function toggleDreamModal(d){
 
         // A.  If a modal is already open ⇒ close it and return
-        if(openDreamId !== null){                 
+        if(openDreamId !== null){             
          dreamModal.style("display","none").html("");
           openDreamId = null;
 
@@ -177,16 +195,17 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         }
 
       // B.  Otherwise open *this* dream
-       openDreamId = d.id;
+        openDreamId = d.id;
         dreamModal.html(`<h3 style="margin-top:0;">Dream ${d.id}</h3><p>${d.text}</p>`)
         .style("display","block");
-        previewBox.style("display","none");
 
         d3.select(window).on("click.modal", () => {
             dreamModal.style("display","none").html("");
             openDreamId = null;
             d3.select(window).on("click.modal", null);   // detach
         }, true);   // ← capture phase so it fires before svg/node handlers
+        previewBox.style("display", "none");
+
     }
 
      // Center preview box (HUD-style) 
@@ -208,9 +227,18 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
                 closestNode = node;
             }
         }
-        if (closestNode) {
+        const maxDist = 40*40; // area around center that activate the previewBox
+        
+        if (closestNode && minDist < maxDist) {
             previewBox.style("display", "block")
-                      .html(`<strong>Dream ${closestNode.id}:</strong> ${closestNode.text.slice(0, 150)}...`);
+                      .html(`<strong>Dream ${closestNode.id}:</strong> ${closestNode.text.slice(0, 100)}...`);
+        }
+        else {
+            previewBox.style("display", "none");
+        }
+        if (openDreamId !== null) {
+            previewBox.style("display", "none");
+            return;
         }
     }
 } // end if data is defined
