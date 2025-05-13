@@ -198,6 +198,7 @@ button {
 }
 
 
+/* SVG constellation */
 svg {
   width: 100vw;
   height: 100vh;
@@ -294,6 +295,7 @@ footer {
   -ms-user-select: none;
   cursor: default;
 }
+
 
 
 /* ————————————————— Telescope ———————————————— */
