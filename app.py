@@ -52,19 +52,22 @@ def build_constellation(threshold=DEFAULT_THRESHOLD):
         sum_sim = sum(float(similarity_matrix[i][j]) for j in range(len(rows)) if i != j)
         node["score"] = sum_sim
 
-    reducer = umap.UMAP(
-        n_neighbors=15,  # Look at more neighbors
-        min_dist=0.1,    # Allow more spacing
-        spread=1.0,      # Reduce the spread
-        metric='cosine'  # Use same metric as similarity calculation
-    )
-    coords_2d = reducer.fit_transform(embeddings)
+    if len(rows) > 1:
+        reducer = umap.UMAP(
+            n_neighbors=min(15, len(rows) - 1),
+            min_dist=0.1,
+            spread=1.0,
+            metric='cosine'
+        )
+        coords_2d = reducer.fit_transform(embeddings)
+    else:
+        coords_2d = np.array([[0.0, 0.0]])
 
     xs, ys = coords_2d[:, 0], coords_2d[:, 1]
     x_min, x_max = float(xs.min()), float(xs.max())
     y_min, y_max = float(ys.min()), float(ys.max())
-    width_range = x_max - x_min
-    height_range = y_max - y_min
+    width_range = x_max - x_min or 1.0
+    height_range = y_max - y_min or 1.0
 
     scale_factor = 30.0
     for i, node in enumerate(nodes):
@@ -193,19 +196,22 @@ def submitted(dream_id):
         sum_sim = sum(float(similarity_matrix[i][j]) for j in range(len(rows)) if i != j)
         node["score"] = sum_sim
 
-    reducer = umap.UMAP(
-        n_neighbors=15,  # Look at more neighbors
-        min_dist=0.1,    # Allow more spacing
-        spread=1.0,      # Reduce the spread
-        metric='cosine'  # Use same metric as similarity calculation
-    )
-    coords_2d = reducer.fit_transform(embeddings)
+    if len(rows) > 1:
+        reducer = umap.UMAP(
+            n_neighbors=min(15, len(rows) - 1),
+            min_dist=0.1,
+            spread=1.0,
+            metric='cosine'
+        )
+        coords_2d = reducer.fit_transform(embeddings)
+    else:
+        coords_2d = np.array([[0.0, 0.0]])
 
     xs, ys = coords_2d[:, 0], coords_2d[:, 1]
     x_min, x_max = float(xs.min()), float(xs.max())
     y_min, y_max = float(ys.min()), float(ys.max())
-    width_range = x_max - x_min
-    height_range = y_max - y_min
+    width_range = x_max - x_min or 1.0
+    height_range = y_max - y_min or 1.0
 
     scale_factor = 30.0
     for i, node in enumerate(nodes):
