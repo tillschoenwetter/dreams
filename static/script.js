@@ -47,7 +47,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
 
     if (toolbarHeader && toolbarContent && toolbarToggle) {
       toolbarHeader.addEventListener("click", function () {
-        const isOpen = toolbarContent.style.display !== "none" && toolbarContent.style.display !== "";
+        const isOpen = toolbarContent.style.display !== "none";
         toolbarContent.style.display = isOpen ? "none" : "flex";
         toolbarToggle.textContent = isOpen ? "+" : "–";
       });
