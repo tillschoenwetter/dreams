@@ -107,7 +107,7 @@ textarea {
   background: transparent;
   border: none;
   color: #eee;
-  font-family: 'Georgia', serif;
+  font-family: 'Inconsolata', normal;
   font-size: 16px;
   line-height: 1.4;
   outline: none;
@@ -124,7 +124,7 @@ textarea {
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 25px;
   padding: 20px;
-  font-family: 'Georgia', serif;
+  font-family: 'Archivo', normal;
   box-shadow: 0 0 25px rgba(255, 255, 255, 0.08),
               0 0 50px rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(4px);
@@ -171,7 +171,7 @@ button {
   border-radius: 4px;
   padding: 10px;
   color: #ddd;
-  font-family: 'Inconsolata', regular;
+  font-family: 'Inconsolata', normal;
   font-size: 13px;
 }
 .header button:hover {
@@ -193,7 +193,7 @@ button {
   max-width: 300px;
   color: #ddd;
   overflow: hidden;
-  font-family: 'Inconsolata', regular;
+  font-family: 'Inconsolata', normal;
 }
 .similar-panel-header {
   background: #222;
@@ -211,14 +211,45 @@ button {
   font-size: 13px;
 }
 
+
+/* —————— Submit another dream ———————*/
+.another_dream {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 20;
+  text-align: left;
+  color: #ddd;
+  font-family: 'Inconsolata', monospace;
+  font-size: 13px;
+  max-width: 300px;
+}
+
+.another_dream button {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 10px;
+  color: #ddd;
+  font-family: 'Inconsolata', monospace;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.another_dream button:hover {
+  background: rgba(100, 100, 100, 0.8);
+}
+
+
 /* —————— Toolbar ———————*/
 .toolbar {
   position: fixed;
   bottom: 20px;
   left: 0; right: 0;              /* span the viewport */
   display: flex;
-  flex-direction: column;         /* allow header + content */
-  align-items: flex-end;
+  flex-direction: row-reverse;         /* allow header + content */
+  align-items: center; /*TEMP: before it was flex-end*/
   gap: 6px;
   padding: 10px 20px;
   border-radius: 8px;
@@ -232,10 +263,11 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 10px;
+  padding: 10px;
   border: 1px solid #444;
   border-radius: 4px;
   color: #ddd;
+  min-height: 23px; /* super sketchy way of making things the same height*/
 }
 .toolbar-content {
   display: flex;
@@ -276,7 +308,7 @@ button {
 }
 
 .search-container input::placeholder {
-  color: #666;
+  color: #666; 
   font-family: 'Inconsolata', monospace;
 }
 
@@ -307,7 +339,7 @@ svg {
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.8);
-  z-index: 999;
+  z-index: 999; 
   display: flex;
   align-items: center;
   justify-content: center;

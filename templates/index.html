@@ -25,7 +25,7 @@
       <img src="{{ url_for('static', filename='imgs/DreamAtlas_logo.svg') }}" alt="DreamAtlas Logo">
       <form method="post" id="dreamForm">
         <div class="dream-box">
-          <textarea name="dream" placeholder="Describe your dream..."></textarea>
+          <textarea name="dream" placeholder="I had a dream where..."></textarea>
         </div>
         <br>
         <div class="buttons">
@@ -37,7 +37,7 @@
   {% else %}
     <!-- Constellation view -->
     <div class="constellation-container">
-      <div class="header">
+      <div class="another_dream">
         <button onclick="window.location.href='/'">Submit Another Dream</button>
         <p> 
           for feedback or questions, please contact us at hello@dreamatlas.cloud
