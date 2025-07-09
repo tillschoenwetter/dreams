@@ -217,13 +217,32 @@ button {
   bottom: 20px;
   left: 0; right: 0;              /* span the viewport */
   display: flex;
-  justify-content: flex-end;      /* push items to the right */
-  gap: 12px;                      /* space between controls */
+  flex-direction: column;         /* allow header + content */
+  align-items: flex-end;
+  gap: 6px;
   padding: 10px 20px;
   border-radius: 8px;
   font-family: 'Inconsolata', monospace;
   font-size: 13px;
   z-index: 10;
+}
+.toolbar-header {
+  background: #222;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #ddd;
+}
+.toolbar-content {
+  display: flex;
+  gap: 12px;
+}
+.toolbar.collapsed .toolbar-content {
+  display: none;
 }
 /* Threshold slider*/
 .threshold-slider {
