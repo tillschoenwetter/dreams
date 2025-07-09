@@ -39,6 +39,19 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         toggleButton.textContent = isOpen ? "+" : "–";
       });
     }
+
+    // Toggle toolbar visibility
+    const toolbarHeader = document.getElementById("toolbarHeader");
+    const toolbarContent = document.getElementById("toolbarContent");
+    const toolbarToggle = document.getElementById("toolbarToggle");
+
+    if (toolbarHeader && toolbarContent && toolbarToggle) {
+      toolbarHeader.addEventListener("click", function () {
+        const isOpen = toolbarContent.style.display !== "none" && toolbarContent.style.display !== "";
+        toolbarContent.style.display = isOpen ? "none" : "flex";
+        toolbarToggle.textContent = isOpen ? "+" : "–";
+      });
+    }
   
     const width = window.innerWidth;
     const height = window.innerHeight;

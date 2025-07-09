@@ -62,16 +62,22 @@
           </ul>
         </div>
       </div>
-      <div class="toolbar">
-        <!-- Add search input -->
-        <div class="search-container" id="search-bar">
-          <input type="text" id="dreamSearch" placeholder="Search dreams..." />
+      <div class="toolbar" id="toolbar">
+        <div class="toolbar-header" id="toolbarHeader">
+          <span>Tools</span>
+          <span id="toolbarToggle">–</span>
         </div>
+        <div class="toolbar-content" id="toolbarContent">
+          <!-- Add search input -->
+          <div class="search-container" id="search-bar">
+            <input type="text" id="dreamSearch" placeholder="Search dreams..." />
+          </div>
 
-        <!-- Existing threshold slider -->
-        <div class="threshold-slider" id="search-slider">
-          <label for="similarityRange">Constellation Visibility: <span id="thresholdValue">0.35</span></label>
-          <input type="range" min="0.0" max="1.0" step="0.01" value="0.50" id="similarityRange" />
+          <!-- Existing threshold slider -->
+          <div class="threshold-slider" id="search-slider">
+            <label for="similarityRange">Constellation Visibility: <span id="thresholdValue">0.35</span></label>
+            <input type="range" min="0.0" max="1.0" step="0.01" value="0.50" id="similarityRange" />
+          </div>
         </div>
       </div>
 
