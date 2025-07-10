@@ -196,15 +196,25 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       svg.transition().duration(750)
         .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(currentScale));
     }
-  
     function updateSimilarPanel(nodeId) {
+      const panel = document.getElementById("similarPanelContent");
+      if (!panel) return;
+    
+      // If no dream is selected, show default message
+      if (nodeId == null || isNaN(nodeId)) {
+        panel.innerHTML = `<p style="color:#888;font-style:italic; padding: 5px;">
+          Select a dream to see similar dreams.
+        </p>`;
+        return;
+      }
+    
       // Get all nodes except the current one
       const otherNodes = nodes.filter(n => n.id !== nodeId);
-      
+    
       // Calculate similarities using the similarity matrix
       const similarDreams = otherNodes.map(node => {
-        const link = links.find(l => 
-          (l.source === nodeId && l.target === node.id) || 
+        const link = links.find(l =>
+          (l.source === nodeId && l.target === node.id) ||
           (l.target === nodeId && l.source === node.id)
         );
         return {
@@ -213,9 +223,19 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
           similarity: link ? link.similarity : 0
         };
       })
+      .filter(d => d.similarity > 0) // 👈 remove 0.00 entries
       .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 4);  // Show top 4 most similar
-
+      .slice(0, 4);
+    
+      // If no similar dreams found
+      if (similarDreams.length === 0) {
+        panel.innerHTML = `<p style="color:#888;font-style:italic; padding: 5px;">
+          No similar dreams found.
+        </p>`;
+        return;
+      }
+    
+      // Create HTML for valid matches
       const html = similarDreams.map(item => {
         const partner = nodes.find(n => n.id === item.id);
         return partner ? 
@@ -224,12 +244,11 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
             <small>Sim: ${item.similarity.toFixed(2)}</small>
           </li>` : "";
       }).join("");
-
-      const panel = document.getElementById("similarPanelContent");
-      if (panel) panel.innerHTML = `<ul>${html}</ul>`;
+    
+      panel.innerHTML = `<ul>${html}</ul>`;
     }
-  
-    window.panelClick = function (dreamId) {
+
+    window.panelClick = function (dreamId) { // when user clicks on a dream the dream get 
       centerOnDream(dreamId);
       updateSimilarPanel(dreamId);
     };
@@ -329,6 +348,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       const ty = height / 2 - dreamY * initialScale;
       svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(initialScale));
     }
+    updateSimilarPanel(newDreamId || null); // if there's no dream that is submitted or clicked show nothing ??? TEMP ???
 
     // --- SIMILARITY THRESHOLD DYNAMIC FILTERING ---
 const thresholdSlider = document.getElementById("similarityRange");
