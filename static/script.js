@@ -61,7 +61,18 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       .attr("height", height);
   
     const container = svg.append("g");
-  
+
+    const background = container.append("rect") // this is a background rect to check if smb clicks out of the nodes
+      .attr("width", width)
+      .attr("height", height)
+      .attr("fill", "transparent")
+      .on("click", () => {
+        updateSimilarPanel(null);
+        d3.select("#tooltip").style("display", "none");
+      })
+      .lower();
+
+
     const zoom = d3.zoom()
       .scaleExtent([0.005, 20])
       .on("zoom", function () {
@@ -69,9 +80,8 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       });
     svg.call(zoom);
 
-    // HI EMMA CHECK THIS OUT
+    
 
-    // Add after the svg.call(zoom) line
     let currentTransform = d3.zoomIdentity;
     const MOVE_SPEED = 30;  // Adjust this value to control movement speed
     const ZOOM_SPEED = 0.1; // Adjust this value to control zoom speed
