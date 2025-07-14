@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>About – DreamAtlas</title>
+  <!-- existing stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- ensure paragraphs use Inconsolata -->
+  <style>
+    p { font-family: 'Inconsolata', monospace; }
+  </style>
+</head>
+<body>
+  <!-- same star-canvas background as on the landing page -->
+  <canvas id="star-canvas" tabindex="-1"></canvas>
+
+  <main class="about-content">
+    <!-- Description section -->
+    <section id="description">
+      <h1>Description</h1>
+      <p>
+        DreamAtlas is a growing map of shared dreams, inviting visitors to contribute personal dream fragments to a collective dreambank. Through algorithmic analysis, individual dreams connect into a visual constellation that reveals shared symbols, themes, and emotions. A repurposed telescope interface guides users through this inner universe, transforming subconscious exploration into a communal experience.
+      </p>
+      <p>
+        DreamAtlas is a web-based platform and participatory artwork that transforms the act of dream-sharing into an exploration of the subconscious as a collective landscape.
+        <!-- add the rest of your long description here -->
+      </p>
+    </section>
+
+    <!-- Meet the Team section -->
+    <section id="meet-the-team">
+      <h2>Meet the Team</h2>
+
+      <div class="team-member">
+        <h3>Ahmed Jamal</h3>
+        <p>
+          Ahmed Jamal (he/him) is an architect and new-media artist with a bachelor’s degree in architecture engineering and environmental studies from AASTMT in Cairo, Egypt (2016). His project Mirror Me! has been showcased at Ars Electronica (Linz, 23), WIP (Cyprus, 23), Pixxelpoint (Nova Gorica, 23), and IMAL (Brussels, 23–24). His current work focuses on reflective themes that explore interactions between humans and machines within digital and physical spaces.
+        </p>
+      </div>
+
+      <div class="team-member">
+        <h3>Emma Silvana Tripaldi</h3>
+        <p>
+          Emma Silvana Tripaldi (she/her) is an artist and visual designer from Florence, Italy, based in Linz, Austria. She holds a degree in Graphic Design and Multimedia and is a student in the Interface Cultures master’s program at Kunstuniversität Linz. Her work spans digital media, sound, and installation art, examining the relationships between humans, nature, and technology. Emma’s work has been featured at Ars Electronica Festival (Austria), Speculum Artium Festival (Slovenia), and WIP Festival (Cyprus).
+        </p>
+      </div>
+
+      <div class="team-member">
+        <h3>Till Schönwetter</h3>
+        <p>
+          Till Schönwetter (he/him) is a new media artist trained in landscape painting. He graduated from Academie Minerva in the Netherlands, where he was nominated for the Academy Award, and is currently pursuing a Master’s degree in Interface Cultures at Kunstuniversität Linz in Austria. His work combines humor, interactivity, and critical engagement, inviting audiences to explore the surreal aspects of digital culture. He is also part of the artist duo WONK with Miguel Rangil. His projects have been presented at Ars Electronica (Austria), Speculum Artium (Slovenia), and What Feels Real in Ann Arbor, Michigan (USA), as well as in exhibitions across Europe.
+        </p>
+      </div>
+    </section>
+
+    <!-- Contacts section -->
+    <section id="contacts">
+      <h2>Contacts</h2>
+      <p>
+        For feedback or questions, please contact us at <a href="mailto:hello@dreamatlas.cloud">hello@dreamatlas.cloud</a>
+      </p>
+    </section>
+  </main>
+
+  <!-- copied star-background script from index.html -->
+  <script>
+    const canvas = document.getElementById('star-canvas');
+    const ctx = canvas.getContext('2d');
+    let stars = [], interactableStars = [];
+    const numStars = 200, numInteractable = 50;
+    let mouseX = -1000, mouseY = -1000;
+
+    function resizeCanvas() {
+      canvas.width = innerWidth;
+      canvas.height = innerHeight;
+      generateStars();
+    }
+    function generateStars() {
+      stars = [];
+      for (let i = 0; i < numStars; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 1.5 + 0.2,
+          opacity: Math.random() * 0.6 + 0.2
+        });
+      }
+      interactableStars = [...stars]
+        .sort((a, b) => b.opacity - a.opacity)
+        .slice(0, numInteractable);
+    }
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const star of stars) {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${star.opacity})`;
+        ctx.fill();
+      }
+      drawConnections();
+    }
+    function drawConnections() {
+      const threshold = 250;
+      for (const star of interactableStars) {
+        const dx = star.x - mouseX, dy = star.y - mouseY;
+        const dist = Math.hypot(dx, dy);
+        if (dist < threshold) {
+          ctx.beginPath();
+          ctx.moveTo(mouseX, mouseY);
+          ctx.lineTo(star.x, star.y);
+          ctx.strokeStyle = `rgba(255,255,255,${(1 - dist/threshold).toFixed(2)})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      }
+    }
+    document.addEventListener('mousemove', e => {
+      mouseX = e.clientX; mouseY = e.clientY;
+    });
+    window.addEventListener('resize', resizeCanvas);
+    (function animate() {
+      drawStars();
+      requestAnimationFrame(animate);
+    })();
+    resizeCanvas();
+  </script>
+</body>
+</html>

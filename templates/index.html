@@ -27,12 +27,53 @@
         <div class="dream-box">
           <textarea name="dream" placeholder="I had a dream..."></textarea>
         </div>
-        <br>
-        <div class="buttons">
-          <button type="submit">Submit Dream</button>
-          <button type="button" data-explore style="margin-top: 10px;">Explore Dreams</button>
+        <div class="submit-form">
+          <button type="button" id="help-submit"> ? </button>
+          <button type="submit" id="submit-dream">Submit Dream</button>
         </div>
+        <div id="help-modal" class="help-modal" aria-hidden="true">
+          <div class="help-modal-content">
+            <button type="button" id="help-close">x</button>
+            <h2>How does it work?</h2>
+            <p>
+              You can anonymously submit a dream using the text box below.<br><br>
+              Once submitted, your dream becomes a star in the constellation.<br>
+              You'll receive an ID number — keep it if you want to revisit your dream later.<br><br>
+              If you're curious, you can explore dreams shared by others through the constellation view.
+            </p>            
+          </div>
+          <script>
+            // help modal is from nere on
+            const helpBtn = document.getElementById('help-submit');    // "?" button
+            const helpModal = document.getElementById('help-modal');   // modal container
+            const helpClose = document.getElementById('help-close');   // "Close" button
+
+            // When user clicks the "?" button
+            helpBtn.addEventListener('click', () => {
+              helpModal.classList.add('show');                // add class to show modal
+              helpModal.setAttribute('aria-hidden', 'false'); // accessibility update
+            });
+
+            // When user clicks the "Close" button
+            helpClose.addEventListener('click', () => {
+              helpModal.classList.remove('show');              // remove class to hide modal
+              helpModal.setAttribute('aria-hidden', 'true');
+            });
+
+            // Optional: clicking outside the content also closes the modal
+            helpModal.addEventListener('click', (e) => {
+              if (e.target === helpModal) {
+                helpModal.classList.remove('show');
+                helpModal.setAttribute('aria-hidden', 'true');
+              }
+            });
+          </script>
+        </div>
+        
       </form>
+      <div id="explore-dreams">
+        <a href="/explore">or explore the dream constellation</a>
+      </div>
     </div>
   {% else %}
     <!-- Constellation view -->
