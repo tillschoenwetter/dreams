@@ -305,8 +305,8 @@ def submitted(dream_id):
 def explore():
     nodes, links, top_similar = build_constellation()
     return render_template(
-        'index.html',          # pagina con form/constellazione
-        user_dream="explore",  # (serve al template)
+        'index.html',          # page with form/constellazione
+        user_dream="explore",  # (its' necessary for the template)
         nodes=nodes,
         links=links,
         top_similar=top_similar,
@@ -330,6 +330,9 @@ def telescope():
         top_similar=[]
     )
 
+@app.route("/about")
+def about():
+    return render_template('about.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

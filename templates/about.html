@@ -5,25 +5,35 @@
   <title>About – DreamAtlas</title>
   <!-- existing stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <!-- ensure paragraphs use Inconsolata -->
-  <style>
-    p { font-family: 'Inconsolata', monospace; }
-  </style>
 </head>
 <body>
+  <!-- Logo linking to landing page -->
+  <div class="logo-container">
+    <a href="/">
+      <img src="{{ url_for('static', filename='imgs/DreamAtlas_logo.svg') }}" alt="DreamAtlas Logo">
+    </a>
+  </div>
   <!-- same star-canvas background as on the landing page -->
   <canvas id="star-canvas" tabindex="-1"></canvas>
 
   <main class="about-content">
     <!-- Description section -->
     <section id="description">
-      <h1>Description</h1>
+      <h1>What is dream atlas?</h1>
       <p>
-        DreamAtlas is a growing map of shared dreams, inviting visitors to contribute personal dream fragments to a collective dreambank. Through algorithmic analysis, individual dreams connect into a visual constellation that reveals shared symbols, themes, and emotions. A repurposed telescope interface guides users through this inner universe, transforming subconscious exploration into a communal experience.
+        DreamAtlas is a growing map of shared dreams, inviting visitors to contribute personal dream fragments to a collective dreambank. Through algorithmic analysis, individual dreams connect into a visual constellation that reveals shared symbols, themes, and emotions. A repurposed telescope interface guides users through this inner universe, transforming subconscious exploration into a communal experience.      
       </p>
       <p>
-        DreamAtlas is a web-based platform and participatory artwork that transforms the act of dream-sharing into an exploration of the subconscious as a collective landscape.
-        <!-- add the rest of your long description here -->
+        DreamAtlas is a web-based platform and participatory artwork that transforms the act of dream-sharing into an exploration of the subconscious as a collective landscape.<br><br>
+        On the platform, users can anonymously submit descriptions of their dreams. These texts are processed using natural language techniques that identify emotional tones, recurring symbols, and thematic overlaps.<br><br>
+        Instead of ranking or filtering, the platform uses these subtle patterns to position each dream within a generative star atlas. This creates a constellation where every dream is connected to others based on shared subconscious motifs—whether it’s flying, falling, losing teeth, encountering strange animals, or feelings of joy, anxiety, or wonder.<br><br>
+        Each time a new user submits a dream, they are shown dreams from others that echo their own. This simple gesture of mirroring—without comment, judgment, or reply—offers an intimate form of recognition, a safe space. Visitors do not scroll through a feed, but drift through a galaxy of dreams. The design is intentionally calm, minimal, and immersive: an anti-feed for the inner world.<br><br>
+        The platform’s core purpose is to cultivate an archive of interconnected dream experiences that grows over time, acting as a kind of living memory of collective subconscious expression. It’s inspired by the idea that dreaming is not only a personal phenomenon but also a social and cultural one—that many of us carry similar symbols, fears, and desires, shaped by shared environments, histories, and media.<br><br>
+        As the dream-constellations expand, it also opens up new possibilities for interdisciplinary use. Artists may explore it as a space for storytelling, researchers might study patterns of collective memory or anxiety, and scientists working in psychology or linguistics could analyze the symbolic language of dreams at scale. DreamAtlas is designed not only as an artwork, but as a resource that evolves with its community.<br><br>
+        In parallel with the web platform, we are currently developing an installation version of DreamAtlas for upcoming exhibitions. The central element of this installation is a telescope—not used to look at outer space, but reimagined as an interface for navigating the shared dream constellation. Through the telescope, visitors will be able to drift across the same digital star map in a tactile, embodied way, transforming the experience into a quiet ritual of discovery. This physical interface underscores the poetic inversion at the heart of the project: a tool for stargazing, turned inward.<br><br>
+        The telescope installation is currently in development and is planned to premiere at the next Ars Electronica Festival. It will be modular and portable, adaptable to different spaces and formats, and designed to complement the web-based experience without requiring constant supervision.<br><br>
+        DreamAtlas began as a personal and collaborative practice of dream journaling among artists and friends. What started as a casual exchange soon revealed uncanny overlaps—similar images, recurring emotions, and parallel narratives. This discovery sparked the idea of building a shared platform to visualize these hidden connections and invite others into the process.<br><br>
+        In an age of algorithmic feeds, viral content, and performative vulnerability, DreamAtlas proposes an alternative mode of digital intimacy—one rooted in silence, resonance, and subconscious connection. By making dreams visible not as isolated experiences, but as stars in a shared sky, the project opens a space for wondering not only what our dreams mean, but how they might mean together.
       </p>
     </section>
 
@@ -62,12 +72,12 @@
     </section>
   </main>
 
-  <!-- copied star-background script from index.html -->
+  <!-- star-background -->
   <script>
     const canvas = document.getElementById('star-canvas');
     const ctx = canvas.getContext('2d');
     let stars = [], interactableStars = [];
-    const numStars = 200, numInteractable = 50;
+    const numStars = 120, numInteractable = 30;
     let mouseX = -1000, mouseY = -1000;
 
     function resizeCanvas() {
@@ -100,7 +110,7 @@
       drawConnections();
     }
     function drawConnections() {
-      const threshold = 250;
+      const threshold = 300;
       for (const star of interactableStars) {
         const dx = star.x - mouseX, dy = star.y - mouseY;
         const dist = Math.hypot(dx, dy);

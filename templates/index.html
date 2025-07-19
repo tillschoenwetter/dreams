@@ -15,10 +15,15 @@
 </head>
 <body>
   <canvas id="star-canvas" tabindex="-1"></canvas> <!-- canvas containing bg stars-->
-  <!-- <div class="header">
-    <a href="about.html">About</a>
-  </div> -->
+  <div class="logo-container">
+    <a href="/">
+      <img src="{{ url_for('static', filename='imgs/DreamAtlas_logo.svg') }}" alt="DreamAtlas Logo">
+    </a>
+  </div>
   {% if not user_dream %}
+    <div class="menu">
+      <a href="/about"> About </a>
+    </div>
     <!--————————— Input view ————————-->
     <div class="input-container">
       <!-- Flask is a lil bitch and cannot accept static file in the traditional way, so u need to use url_for -->
