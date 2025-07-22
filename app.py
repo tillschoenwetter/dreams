@@ -8,6 +8,8 @@ import os
 import json
 from datetime import datetime
 
+# DEBUG REMINDER, IF NOTHING WORKS CHECK THE END OF THE SCRIPT
+
 app = Flask(__name__)
 model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')  # Larger, better at paraphrasing
 DEFAULT_THRESHOLD = 0.3
@@ -335,4 +337,5 @@ def about():
     return render_template('about.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+   # app.run(debug=True) # run this for the usual 127.0.0.1:5000
+    app.run(host="0.0.0.0", port=5050, debug=True) # run this for local network hosted server (your_IP:5050)
