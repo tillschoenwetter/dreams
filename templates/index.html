@@ -125,7 +125,39 @@
           </div>
         </div>
       </div>
-
+      <!-- MOBILE BOTTOM SHEET - Only visible on mobile -->
+      <div class="bottom-sheet-container" id="bottomSheetContainer">
+        <div class="bottom-sheet" id="bottomSheet">
+          <div class="sheet-handle" id="sheetHandle"></div>
+          
+          <div class="sheet-header">
+            <div class="sheet-title" id="sheetTitle">Dream Explorer</div>
+            <div class="sheet-subtitle" id="sheetSubtitle">Tap a star to explore connections</div>
+          </div>
+          
+          <div class="sheet-content" id="sheetContent">
+            <div class="no-selection" id="noSelection">
+              <p>✨ Tap any star in the constellation above to explore a dream</p>
+            </div>
+            
+            <!-- Dynamic dream content will be inserted here -->
+            <div class="dream-display" id="dreamDisplay" style="display: none;">
+              <div class="dream-text" id="dreamText"></div>
+              <div class="dream-meta">
+                <span id="dreamId"></span>
+                <span class="similarity-score" id="dreamSimilarity">Selected</span>
+              </div>
+              
+              <div class="similar-dreams" id="similarDreams">
+                <h4>Similar Dreams</h4>
+                <ul class="similar-list" id="similarList">
+                  <!-- Similar dreams will be populated here -->
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <svg id="constellation"></svg>
       <div id="tooltip" class="tooltip" style="display: none;"></div>
 

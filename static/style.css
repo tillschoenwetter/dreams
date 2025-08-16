@@ -316,7 +316,10 @@ button {
   padding: 5px 10px;
   font-size: 13px;
 }
-
+/* Mobile Bottom Sheet - Hidden on Desktop */
+.bottom-sheet-container {
+  display: none; /* Hidden by default */
+}
 
 /* —————— Submit another dream ———————*/
 .another_dream {
@@ -361,7 +364,7 @@ button {
   box-sizing: border-box;
   font-family: 'Inconsolata', monospace;
   font-size: 13px;
-  z-index: 10;
+  z-index: 101;
 }
 
 .toolbar-header {
@@ -382,7 +385,7 @@ button {
 }
 .toolbar.collapsed .toolbar-content {
   display: none;
-  z-index: 5;
+  z-index: 90;
 }
 /* When toolbar is collapsed: disable its interactions */
 .toolbar.collapsed {
@@ -504,7 +507,7 @@ svg {
   position: fixed;
   top: 20px;
   left: 20px;
-  z-index: 100;
+  z-index: 90;
 }
 .logo-container img {
   height: 50px;
@@ -536,14 +539,19 @@ footer {
   cursor: default;
 }
 
-/* ———————————————————————————————————— MOBILE version ———————————————————————————————————— */
+/* ————————————————————————————————————————— MOBILE version ——————————————————————————————————————————————————————————————————————————————— */
 
 @media (max-width: 768px) {
   /* --- GENERAL LAYOUT --- */
   body {
     font-size: 16px; /* slightly larger for readability */
   }
-
+  .similar-panel {
+    display: none !important; /* Your existing similar panel hidden */
+  }
+  #tooltip {
+    display: none !important; /* Desktop tooltips hidden */
+  }
   .input-container {
     position: fixed;      /* stays fixed in the viewport */
     padding-left: 10px;
@@ -556,9 +564,13 @@ footer {
     justify-content: center;
     align-items: center;
     pointer-events: auto; /* keeps inputs clickable */
-    z-index: 100;         /* stays above canvas */
+    z-index: 90;         /* stays above canvas */
   }
-
+  .node.selected { /*the selected dream turns yellow*/
+    fill: #ffd700 !important; /* Gold/yellow color */
+    stroke: #ffd700;
+    stroke-width: 2px;
+  }
   /* --- TOOLBAR --- */
   .toolbar {
     position: fixed;
@@ -574,10 +586,10 @@ footer {
   }
   .toolbar-header {
     max-width: 40px;
-    
   }
   /* Stack toolbar contents vertically */
   .toolbar-content {
+    display: none; /*hidden*/
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
@@ -641,16 +653,183 @@ footer {
     right: 10px
   }
 
-  /* --- SIMILAR DREAMS PANEL --- */
+  /* Hide desktop panel on mobile */
   .similar-panel {
+    display: none !important;
+  }
+
+  /* Show bottom sheet container on mobile */
+  .bottom-sheet-container {
+    display: block !important;
     position: fixed;
-    left: 10px;
-    right: 10px;
-    margin: 0 auto;        /* centered horizontally */
-    max-height: 40vh;      /* not taller than 40% of screen */
-    overflow-y: auto;      /* scroll if too many dreams */
-    font-size: 14px;       /* more compact for phone */
-    z-index: 100;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 30;
+  }
+
+  /* Bottom sheet styles */
+  .bottom-sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px 16px 0 0;
+    transform: translateY(calc(100% - 80px)); /* Collapsed by default */
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    pointer-events: auto;
+    max-height: 80vh;
+    min-height: 80px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* Sheet states */
+  .bottom-sheet.peek {
+    transform: translateY(calc(100% - 120px));
+  }
+
+  .bottom-sheet.expanded {
+    transform: translateY(15vh);
+  }
+
+  /* Sheet handle */
+  .sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 2px;
+    margin: 12px auto;
+    cursor: grab;
+    transition: background 0.2s;
+  }
+
+  .sheet-handle:active {
+    cursor: grabbing;
+    background: rgba(255,255,255,0.6);
+  }
+
+  /* Sheet header */
+  .sheet-header {
+    padding: 0 20px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    user-select: none;
+  }
+
+  .sheet-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+
+  .sheet-subtitle {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* Sheet content */
+  .sheet-content {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(70vh - 120px);
+  }
+
+  .no-selection {
+    text-align: center;
+    color: rgba(255,255,255,0.5);
+    font-style: italic;
+    padding: 40px 20px;
+  }
+
+  .dream-display {
+    display: none;
+  }
+
+  .dream-display.active {
+    display: block;
+  }
+
+  .dream-text {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: rgba(255,255,255,0.9);
+  }
+
+  .dream-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  .similarity-score {
+    background: rgba(255,255,255,0.1);
+    padding: 4px 8px;
+    border-radius: 12px;
+  }
+
+  /* Similar dreams list */
+  .similar-dreams h4 {
+    font-size: 14px;
+    margin-bottom: 15px;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .similar-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .similar-item {
+    padding: 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: 1px solid transparent;
+  }
+
+  .similar-item:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  .similar-item:active {
+    background: rgba(255,255,255,0.15);
+  }
+
+  .similar-text {
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .similar-score {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* Hide desktop similar panel on mobile only */
+  .similar-panel {
+    display: none !important;
+  }
+
+  /* Hide "Submit Another Dream" button on mobile to avoid bottom sheet conflicts */
+  .another_dream {
+    display: none;
   }
 
   /* --- DREAM INPUT BOX --- */
