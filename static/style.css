@@ -27,21 +27,7 @@
   font-display: swap;
 }
 
-@media (max-width: 768px) {
-  .dream-box {
-    width: 90vw;
-    max-width: 500px;
-    font-size: 16px;
-  }
-  .buttons button {
-    padding: 14px 24px;
-    font-size: 18px;
-  }
-  .toolbar,
-  .similar-panel {
-    display: none; /* hide heavy stuff for small screens */
-  }
-}
+
 html {
   background: black;
 }
@@ -126,12 +112,22 @@ h1, h2, h3 {
 }
 
 .input-container {
+  position: fixed;      /* stays fixed in the viewport */
+  padding-left: 10px;
+  padding-right: 10px; 
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; 
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  pointer-events: auto; /* keeps inputs clickable */
+  z-index: 100;         /* stays above canvas */
 }
+
 .input-container img {
   max-width: 200px;
   margin-bottom: 40px;
@@ -142,13 +138,14 @@ h1, h2, h3 {
   background: rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 4px;
+  box-sizing: border-box;
   padding: 20px;
   box-shadow: 0 0 25px rgba(255, 255, 255, 0.08),
               0 0 50px rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(4px);
   transition: box-shadow 0.3s ease;
-  width: 80vw;      /* 80% of the screen width */
-  max-width: 900px;
+  width: 80vw;
+  max-width: 800px;
 }
 .dream-box:hover {
   box-shadow: 0 0 35px rgba(255, 255, 255, 0.15),
@@ -326,7 +323,7 @@ button {
   position: fixed;
   bottom: 20px;
   left: 20px;
-  z-index: 20;
+  z-index: 100;
   text-align: left;
   color: #ddd;
   font-family: 'Inconsolata', monospace;
@@ -350,33 +347,6 @@ button {
   background: rgba(100, 100, 100, 0.8);
 }
 
-/* Mobile-specific tweaks */
-@media (max-width: 768px) {
-  /* Hide the contact text */
-  .another_dream p {
-    display: none;
-  }
-
-  /* Make the button a floating round-ish button */
-  .another_dream {
-    bottom: 10px; /* keep it lower */
-    left: 10px;   /* push to corner */
-    max-width: unset;
-  }
-
-  .another_dream button {
-    font-size: 14px;
-    padding: 12px 18px;
-  }
-
-  /* Hide extra panels that clutter */
-  .similar-panel,
-  .toolbar {
-    display: none;
-  }
-}
-
-
 /* —————— Toolbar ———————*/
 .toolbar {
   position: fixed;
@@ -388,10 +358,12 @@ button {
   gap: 6px;
   padding: 10px 20px;
   border-radius: 8px;
+  box-sizing: border-box;
   font-family: 'Inconsolata', monospace;
   font-size: 13px;
   z-index: 10;
 }
+
 .toolbar-header {
   background: #222;
   cursor: pointer;
@@ -410,7 +382,21 @@ button {
 }
 .toolbar.collapsed .toolbar-content {
   display: none;
+  z-index: 5;
 }
+/* When toolbar is collapsed: disable its interactions */
+.toolbar.collapsed {
+  pointer-events: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* But keep the header clickable to reopen it */
+.toolbar.collapsed .toolbar-header {
+  pointer-events: auto;
+}
+
+
 /* Threshold slider*/
 .threshold-slider {
   position: static;
@@ -550,9 +536,146 @@ footer {
   cursor: default;
 }
 
+/* ———————————————————————————————————— MOBILE version ———————————————————————————————————— */
+
+@media (max-width: 768px) {
+  /* --- GENERAL LAYOUT --- */
+  body {
+    font-size: 16px; /* slightly larger for readability */
+  }
+
+  .input-container {
+    position: fixed;      /* stays fixed in the viewport */
+    padding-left: 10px;
+    padding-right: 10px; 
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column; 
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto; /* keeps inputs clickable */
+    z-index: 100;         /* stays above canvas */
+  }
+
+  /* --- TOOLBAR --- */
+  .toolbar {
+    position: fixed;
+    top: 10px;
+    left: 0;
+    right: 10px;
+    width: 100%;
+    flex-direction: column;   /* stack vertically */
+    align-items: stretch;     /* let children fill width */
+    padding: 10px;
+    max-height: 25px;
+    z-index: 100; /* ensure it stays above constellation */
+  }
+  .toolbar-header {
+    max-width: 40px;
+    
+  }
+  /* Stack toolbar contents vertically */
+  .toolbar-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    left: 10px;
+    right: 10px
+  }
+  .threshold-slider input[type="range"] {
+    width: 100%;        /* take full width of the container */
+    max-width: none;    /* remove any max width restriction */
+  }
+
+  /* ————— Mobile: shrink toolbar down to just the header ————— */
+  .toolbar.collapsed {
+    /* 1) shrink-wrap instead of full-width flex */
+    display: inline-flex;
+    max-height: 30px;
+
+    /* 2) anchor top-right, cancel left/right spanning */
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    bottom: auto;
+    left: auto ;
+
+    /* 3) force it to size to its contents only */
+    width: auto ;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+
+    /* let clicks pass through everything but the header */
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* header itself stays visible, clickable, and styled */
+  .toolbar.collapsed .toolbar-header {
+    display: inline-flex;  /* match the parent shrink-wrap */
+    pointer-events: auto;  /* re-enable clicks here */
+    margin: 0;
+  }
+
+  /* hide the content area completely */
+  .toolbar.collapsed .toolbar-content {
+    display: none;
+  }
+
+  /* Search container + input full width */
+  .search-container {
+    left: 10px;
+    right: 10px
+  }
+  .search-container input {
+    font-size: 16px; /* touch-friendly */
+  }
+
+  /* Slider also full width */
+  .threshold-slider {
+    left: 10px;
+    right: 10px
+  }
+
+  /* --- SIMILAR DREAMS PANEL --- */
+  .similar-panel {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    margin: 0 auto;        /* centered horizontally */
+    max-height: 40vh;      /* not taller than 40% of screen */
+    overflow-y: auto;      /* scroll if too many dreams */
+    font-size: 14px;       /* more compact for phone */
+    z-index: 100;
+  }
+
+  /* --- DREAM INPUT BOX --- */
+  .dream-box {
+    width: 90vw;          /* scale with screen */
+    max-width: none;      /* remove fixed 900px */
+    font-size: 16px;
+  }
+
+  /* --- BUTTONS --- */
+  .buttons button {
+    width: 100%;           /* big easy-to-tap buttons */
+    font-size: 18px;
+    padding: 14px;
+  }
+
+  /* --- HIDE CLUTTER --- */
+  .another_dream p { 
+    display: none; /* hide "for questions contact..." on mobile */
+  }
+}
+  
 
 
-/* ————————————————— Telescope ———————————————— */
+/* ———————————————————————————————————— Telescope ———————————————————————————————————— */
 .circle-container {
   position: fixed;
   top: 50%;

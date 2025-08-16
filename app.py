@@ -337,5 +337,6 @@ def about():
     return render_template('about.html')
 
 if __name__ == '__main__':
-   # app.run(debug=True) # run this for the usual 127.0.0.1:5000
+    # app.run(debug=True) # run this for the usual 127.0.0.1:5000
     app.run(host="0.0.0.0", port=5050, debug=True) # run this for local network hosted server (your_IP:5050)
+    
