@@ -202,93 +202,106 @@
       });
     }
   </script>
-  
-  <script>
-    const canvas = document.getElementById('star-canvas');
-    const ctx = canvas.getContext('2d');
-  
-    // Detect if it's a mobile device
-    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-  
-    // Default values
-    let stars = [];
-    let interactableStars = [];
-    let mouseX = -1000, mouseY = -1000;
-  
-    // Adjust star counts based on device
-    let numStars = isMobile ? 50 : 200;           // fewer stars on mobile
-    let numInteractable = isMobile ? 0 : 50;      // no interactive stars on mobile
-  
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      generateStars(); 
+
+<script> // STAR CANVAS
+  const canvas = document.getElementById('star-canvas');
+  const ctx = canvas.getContext('2d');
+
+  // Use window width for mobile detection (same as CSS media query)
+  const isMobileWidth = window.innerWidth <= 768;
+
+  let stars = [];
+  let interactableStars = [];
+  let mouseX = -1000, mouseY = -1000;
+
+  // Adjust star counts based on screen size
+  let numStars = isMobileWidth ? 80 : 200;           // fewer stars on mobile
+  let numInteractable = isMobileWidth ? 0 : 50;      // no interactive stars on mobile
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    generateStars(); 
+  }
+
+  function generateStars() {
+    stars = [];
+    interactableStars = [];
+    for (let i = 0; i < numStars; i++) {
+      const star = {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 1.5 + 0.2,
+        opacity: Math.random() * 0.6 + 0.2
+      };
+      stars.push(star);
     }
-  
-    function generateStars() {
-      stars = [];
-      interactableStars = [];
-      for (let i = 0; i < numStars; i++) {
-        const star = {
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          radius: Math.random() * 1.5 + 0.2,
-          opacity: Math.random() * 0.6 + 0.2
-        };
-        stars.push(star);
-      }
+    
+    // Only create interactable stars on desktop
+    if (!isMobileWidth) {
       interactableStars = [...stars]
         .sort((a, b) => b.opacity - a.opacity)
         .slice(0, numInteractable);
     }
-  
-    function drawStars() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (const star of stars) {
+  }
+
+  function drawStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const star of stars) {
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+      ctx.fill();
+    }
+    
+    // Only draw connections on desktop
+    if (!isMobileWidth) {
+      drawConnections();
+    }
+  }
+
+  // Only define drawConnections function on desktop
+  function drawConnections() {
+    if (isMobileWidth) return; // Extra safety check
+    
+    const threshold = 250;
+    for (const star of interactableStars) {
+      const dx = star.x - mouseX;
+      const dy = star.y - mouseY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < threshold) {
         ctx.beginPath();
-        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
-        ctx.fill();
-      }
-      // Only draw connections on desktop
-      if (!isMobile) drawConnections();
-    }
-  
-    function drawConnections() {
-      const threshold = 250;
-      for (const star of interactableStars) {
-        const dx = star.x - mouseX;
-        const dy = star.y - mouseY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < threshold) {
-          ctx.beginPath();
-          ctx.moveTo(mouseX, mouseY);
-          ctx.lineTo(star.x, star.y);
-          ctx.strokeStyle = `rgba(255, 255, 255, ${(1 - distance / threshold).toFixed(2)})`;
-          ctx.lineWidth = 0.8;
-          ctx.stroke();
-        }
+        ctx.moveTo(mouseX, mouseY);
+        ctx.lineTo(star.x, star.y);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${(1 - distance / threshold).toFixed(2)})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
       }
     }
-  
-    // Only track mouse movement on desktop
-    if (!isMobile) {
-      document.addEventListener('mousemove', (e) => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-      });
-    }
-  
-    window.addEventListener('resize', resizeCanvas);
-  
-    function animate() {
-      drawStars();
-      requestAnimationFrame(animate);
-    }
-  
-    resizeCanvas();
-    animate();
-  </script>
+  }
+
+  // Only add mouse move listener on desktop
+  if (!isMobileWidth) {
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+    
+    console.log("Desktop detected - mouse interactions enabled");
+  } else {
+    console.log("Mobile detected - mouse interactions disabled");
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+
+  function animate() {
+    drawStars();
+    requestAnimationFrame(animate);
+  }
+
+  resizeCanvas();
+  animate();
+</script>
 
   <script>
     // Ensure spinner is hidden when page loads

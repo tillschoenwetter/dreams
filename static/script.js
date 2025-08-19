@@ -1,3 +1,10 @@
+console.log("=== MOBILE DEBUG ===");
+console.log("User agent:", navigator.userAgent);
+console.log("nodes exists:", typeof nodes !== 'undefined');
+console.log("links exists:", typeof links !== 'undefined');
+console.log("#constellation element:", document.getElementById("constellation"));
+console.log("D3 loaded:", typeof d3 !== 'undefined');
+
 // Replace the existing pageshow event listener with this updated version
 window.addEventListener('pageshow', function(event) {
   const spinner = document.getElementById("preloadSpinner");
@@ -192,7 +199,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     }
   }
 
-  function centerOnDream(dreamId) {
+  function centerOnDream(dreamId, svgElement, xScaleFunc, yScaleFunc, zoomFunc, widthVal, heightVal) {
     console.log("Centering on dream:", dreamId);
     
     const targetNode = nodes.find(n => n.id === dreamId);
@@ -203,33 +210,28 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     
     console.log("Target node found:", targetNode);
     
-    // Get current transform
-    const currentTransform = d3.zoomTransform(svg.node());
+    const currentTransform = d3.zoomTransform(svgElement.node());
+    const targetX = xScaleFunc(targetNode.x);
+    const targetY = yScaleFunc(targetNode.y);
     
-    // Calculate target position
-    const targetX = xScale(targetNode.x);
-    const targetY = yScale(targetNode.y);
-    
-    // Use current scale or set a reasonable default
     let scale = currentTransform.k;
     if (scale < 1) {
-      scale = 2; // Reasonable default zoom level
+      scale = 2;
     }
     
-    // Calculate center position
-    const tx = width / 2 - targetX * scale;
-    const ty = height / 2 - targetY * scale;
+    const tx = widthVal / 2 - targetX * scale;
+    const ty = heightVal / 2 - targetY * scale;
     
     console.log("Centering calculation:", { 
       targetX, targetY, tx, ty, scale, dreamId 
     });
     
-    // Apply transform with transition - same duration for all devices
-    svg.transition()
+    svgElement.transition()
       .duration(750)
       .ease(d3.easeQuadInOut)
-      .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+      .call(zoomFunc.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
   }
+  
 
   function updateSimilarPanel(nodeId) {
     console.log("Updating similar panel for dream:", nodeId);
@@ -295,10 +297,9 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
 
   // Panel Click Function
   window.panelClick = function (dreamId) {
-    centerOnDream(dreamId);
+    centerOnDream(dreamId, svg, xScale, yScale, zoom, width, height);
     updateSimilarPanel(dreamId);
     
-    // Apply selection highlighting on ALL devices
     d3.selectAll('.node').classed('selected', false);
     d3.selectAll('.node')
       .filter(d => d.id === dreamId)
@@ -368,18 +369,13 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     .on("click", function(d) {
       console.log("Node clicked:", d.id);
       
-      // Center on dream
-      centerOnDream(d.id);
+      // Pass all the variables that centerOnDream needs
+      centerOnDream(d.id, svg, xScale, yScale, zoom, width, height);
       
-      // Update similar panel
       updateSimilarPanel(d.id);
       
-      // Apply yellow selection highlighting on ALL devices
       console.log("Applying selection to dream:", d.id);
-      
-      // Remove selection from all nodes
       d3.selectAll('.node').classed('selected', false);
-      // Add selection to clicked node
       d3.select(this).classed('selected', true);
       console.log("Selection applied");
     })
