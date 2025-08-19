@@ -260,7 +260,11 @@ button {
   -ms-user-select: none;
   cursor: default;
 }
-
+.node.selected {
+  fill: #ffd700 !important; /* Force gold/yellow color */
+  stroke: #ffd700 !important; /* Force gold stroke */
+  stroke-width: 3px !important; /* Force thick stroke */
+}
 /* ↓ Header ↓ */
 .header {
   position: absolute;
@@ -539,7 +543,7 @@ footer {
   cursor: default;
 }
 
-/* ————————————————————————————————————————— MOBILE version ——————————————————————————————————————————————————————————————————————————————— */
+/* ————————————————————————————————————————— MOBILE version ———————————————————————————————————————————————————————————————————————————————————————————————————————— */
 
 @media (max-width: 768px) {
   /* --- GENERAL LAYOUT --- */
@@ -565,11 +569,6 @@ footer {
     align-items: center;
     pointer-events: auto; /* keeps inputs clickable */
     z-index: 90;         /* stays above canvas */
-  }
-  .node.selected { /*the selected dream turns yellow*/
-    fill: #ffd700 !important; /* Gold/yellow color */
-    stroke: #ffd700;
-    stroke-width: 2px;
   }
   /* --- TOOLBAR --- */
   .toolbar {
@@ -824,7 +823,7 @@ footer {
 
   /* Hide desktop similar panel on mobile only */
   .similar-panel {
-    display: none !important;
+    display: none;
   }
 
   /* Hide "Submit Another Dream" button on mobile to avoid bottom sheet conflicts */

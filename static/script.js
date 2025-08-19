@@ -27,10 +27,6 @@ window.addEventListener('popstate', function() {
 // Only run if this page includes constellation data
 if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
 
-  // ===== MOBILE DETECTION AND INITIALIZATION =====
-  const isMobile = window.innerWidth <= 768;
-  let mobileSheet = null;
-
   // Toggle panel for similar dreams (Desktop)
   const panelHeader = document.getElementById("similarPanelHeader");
   const panelContent = document.getElementById("similarPanelContent");
@@ -44,12 +40,12 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     });
   }
 
-  // Toggle toolbar visibility (Desktop - Mobile handled differently)
+  // Toggle toolbar visibility
   const toolbarHeader = document.getElementById("toolbarHeader");
   const toolbarContent = document.getElementById("toolbarContent");
   const toolbarToggle = document.getElementById("toolbarToggle");
 
-  if (toolbarHeader && toolbarContent && toolbarToggle && !isMobile) {
+  if (toolbarHeader && toolbarContent && toolbarToggle) {
     // Desktop toolbar behavior
     toolbarHeader.addEventListener("click", function () {
       const isOpen = toolbarContent.style.display !== "none" && toolbarContent.style.display !== "";
@@ -197,93 +193,116 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
   }
 
   function centerOnDream(dreamId) {
+    console.log("Centering on dream:", dreamId);
+    
     const targetNode = nodes.find(n => n.id === dreamId);
-    if (!targetNode) return;
+    if (!targetNode) {
+      console.log("Target node not found:", dreamId);
+      return;
+    }
+    
+    console.log("Target node found:", targetNode);
+    
+    // Get current transform
+    const currentTransform = d3.zoomTransform(svg.node());
+    
+    // Calculate target position
     const targetX = xScale(targetNode.x);
     const targetY = yScale(targetNode.y);
-    const currentTransform = d3.zoomTransform(svg.node());
-    const currentScale = currentTransform.k;
-    const tx = width / 2 - targetX * currentScale;
-    const ty = height / 2 - targetY * currentScale;
-    svg.transition().duration(750)
-      .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(currentScale));
+    
+    // Use current scale or set a reasonable default
+    let scale = currentTransform.k;
+    if (scale < 1) {
+      scale = 2; // Reasonable default zoom level
+    }
+    
+    // Calculate center position
+    const tx = width / 2 - targetX * scale;
+    const ty = height / 2 - targetY * scale;
+    
+    console.log("Centering calculation:", { 
+      targetX, targetY, tx, ty, scale, dreamId 
+    });
+    
+    // Apply transform with transition - same duration for all devices
+    svg.transition()
+      .duration(750)
+      .ease(d3.easeQuadInOut)
+      .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
   }
 
-  // ===== UPDATED SIMILAR PANEL FUNCTION (MOBILE + DESKTOP) =====
   function updateSimilarPanel(nodeId) {
+    console.log("Updating similar panel for dream:", nodeId);
+    
     const dreamData = nodes.find(n => n.id === nodeId);
     
-    if (isMobile) {
-      // Mobile: Use bottom sheet
-      if (mobileSheet && dreamData) {
-        mobileSheet.selectDream(nodeId, dreamData);
-      }
-    } else {
-      // Desktop: Keep existing panel logic
-      const panel = document.getElementById("similarPanelContent");
-      if (!panel) return;
-  
-      // If no dream is selected, show default message
-      if (nodeId == null || isNaN(nodeId)) {
-        panel.innerHTML = `<p style="color:#888;font-style:italic; padding: 5px;">
-          Select a dream to see similar dreams.
-        </p>`;
-        return;
-      }
-  
-      // Get all nodes except the current one
-      const otherNodes = nodes.filter(n => n.id !== nodeId);
-  
-      // Calculate similarities using the similarity matrix
-      const similarDreams = otherNodes.map(node => {
-        const link = links.find(l =>
-          (l.source === nodeId && l.target === node.id) ||
-          (l.target === nodeId && l.source === node.id)
-        );
-        return {
-          id: node.id,
-          text: node.text,
-          similarity: link ? link.similarity : 0
-        };
-      })
-      .filter(d => d.similarity > 0) // remove 0.00 entries
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 4);
-  
-      // If no similar dreams found
-      if (similarDreams.length === 0) {
-        panel.innerHTML = `<p style="color:#888;font-style:italic; padding: 5px;">
-          No similar dreams found.
-        </p>`;
-        return;
-      }
-  
-      // Create HTML for valid matches
-      const html = similarDreams.map(item => {
-        const partner = nodes.find(n => n.id === item.id);
-        return partner ? 
-          `<li onclick='panelClick(${partner.id})' style='cursor:pointer;'>
-            ${partner.text}<br>
-            <small>Sim: ${item.similarity.toFixed(2)}</small>
-          </li>` : "";
-      }).join("");
-  
-      panel.innerHTML = `<ul>${html}</ul>`;
+    // Just use the desktop panel logic for ALL devices
+    const panel = document.getElementById("similarPanelContent");
+    if (!panel) {
+      console.log("Similar panel element not found");
+      return;
     }
+
+    // If no dream is selected, show default message
+    if (nodeId == null || isNaN(nodeId)) {
+      panel.innerHTML = `<p style="color:#888;font-style:italic; padding: 5px;">
+        Select a dream to see similar dreams.
+      </p>`;
+      return;
+    }
+
+    // Get all nodes except the current one
+    const otherNodes = nodes.filter(n => n.id !== nodeId);
+
+    // Calculate similarities using the similarity matrix
+    const similarDreams = otherNodes.map(node => {
+      const link = links.find(l =>
+        (l.source === nodeId && l.target === node.id) ||
+        (l.target === nodeId && l.source === node.id)
+      );
+      return {
+        id: node.id,
+        text: node.text,
+        similarity: link ? link.similarity : 0
+      };
+    })
+    .filter(d => d.similarity > 0) // remove 0.00 entries
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, 4);
+
+    // If no similar dreams found
+    if (similarDreams.length === 0) {
+      panel.innerHTML = `<p style="color:#888;font-style:italic; padding: 5px;">
+        No similar dreams found.
+      </p>`;
+      return;
+    }
+
+    // Create HTML for valid matches
+    const html = similarDreams.map(item => {
+      const partner = nodes.find(n => n.id === item.id);
+      return partner ? 
+        `<li onclick='panelClick(${partner.id})' style='cursor:pointer;'>
+          ${partner.text}<br>
+          <small>Sim: ${item.similarity.toFixed(2)}</small>
+        </li>` : "";
+    }).join("");
+
+    panel.innerHTML = `<ul>${html}</ul>`;
+    
+    console.log("Similar panel updated with", similarDreams.length, "dreams");
   }
 
-  // ===== UPDATED PANEL CLICK FUNCTION =====
+  // Panel Click Function
   window.panelClick = function (dreamId) {
     centerOnDream(dreamId);
     updateSimilarPanel(dreamId);
     
-    // Add mobile highlighting
-    if (isMobile) {
-      d3.selectAll('.node').classed('selected', false);
-      d3.selectAll('.node')
-        .filter(d => d.id === dreamId)
-        .classed('selected', true);
-    }
+    // Apply selection highlighting on ALL devices
+    d3.selectAll('.node').classed('selected', false);
+    d3.selectAll('.node')
+      .filter(d => d.id === dreamId)
+      .classed('selected', true);
   };
 
   const link = container.append("g")
@@ -333,6 +352,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     .domain(scoreExtent)
     .range([0.1, 3]);
 
+  // Create nodes - universal version that works everywhere
   container.append("g")
     .attr("class", "nodes")
     .selectAll("circle")
@@ -343,37 +363,44 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     .attr("cy", d => yScale(d.y))
     .attr("r", d => sizeScale(d.score))
     .attr("fill", d => d.id === newDreamId ? "orange" : "#fff")
-    .on("click", d => {
+    .style("cursor", "pointer")
+    .style("-webkit-tap-highlight-color", "transparent")
+    .on("click", function(d) {
+      console.log("Node clicked:", d.id);
+      
+      // Center on dream
       centerOnDream(d.id);
+      
+      // Update similar panel
       updateSimilarPanel(d.id);
       
-      // Add mobile node highlighting
-      if (isMobile) {
-        d3.selectAll('.node').classed('selected', false);
-        d3.select(d3.event.target).classed('selected', true);
-      }
+      // Apply yellow selection highlighting on ALL devices
+      console.log("Applying selection to dream:", d.id);
+      
+      // Remove selection from all nodes
+      d3.selectAll('.node').classed('selected', false);
+      // Add selection to clicked node
+      d3.select(this).classed('selected', true);
+      console.log("Selection applied");
     })
-    .on("mouseover", d => {
-      if (!isMobile) { // Only show tooltips on desktop
-        d3.select("#tooltip")
-          .style("display", "block")
-          .html(`<strong>Dream ${d.id}:</strong><br>${d.text}`);
-      }
-      d3.select(d3.event.target).transition().duration(200)
+    .on("mouseover", function(d) {
+      // Show tooltips and size changes on ALL devices
+      d3.select("#tooltip")
+        .style("display", "block")
+        .html(`<strong>Dream ${d.id}:</strong><br>${d.text}`);
+      
+      d3.select(this).transition().duration(200)
         .attr("r", sizeScale(d.score) + 2);
     })
-    .on("mousemove", d => {
-      if (!isMobile) {
-        d3.select("#tooltip")
-          .style("left", (d3.event.pageX + 10) + "px")
-          .style("top", (d3.event.pageY + 10) + "px");
-      }
+    .on("mousemove", function(d) {
+      d3.select("#tooltip")
+        .style("left", (d3.event.pageX + 10) + "px")
+        .style("top", (d3.event.pageY + 10) + "px");
     })
-    .on("mouseout", d => {
-      if (!isMobile) {
-        d3.select("#tooltip").style("display", "none");
-      }
-      d3.select(d3.event.target).transition().duration(200)
+    .on("mouseout", function(d) {
+      d3.select("#tooltip").style("display", "none");
+      
+      d3.select(this).transition().duration(200)
         .attr("r", sizeScale(d.score));
     });
 
@@ -458,245 +485,4 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     });
   }
 
-  // ===== INITIALIZE MOBILE BOTTOM SHEET =====
-  if (isMobile) {
-    mobileSheet = new MobileBottomSheet();
-  }
-}
-
-// ==================== MOBILE BOTTOM SHEET CLASS ====================
-class MobileBottomSheet {
-constructor() {
-  this.sheet = document.getElementById('bottomSheet');
-  this.handle = document.getElementById('sheetHandle');
-  this.title = document.getElementById('sheetTitle');
-  this.subtitle = document.getElementById('sheetSubtitle');
-  this.noSelection = document.getElementById('noSelection');
-  this.dreamDisplay = document.getElementById('dreamDisplay');
-  this.dreamText = document.getElementById('dreamText');
-  this.dreamId = document.getElementById('dreamId');
-  this.similarList = document.getElementById('similarList');
-  
-  this.currentState = 'collapsed';
-  this.selectedDream = null;
-  this.startY = 0;
-  this.currentY = 0;
-  this.isDragging = false;
-  
-  if (this.sheet) {
-    this.init();
-  }
-}
-
-init() {
-  this.setupEventListeners();
-  this.setupToolbarToggle();
-}
-
-setupEventListeners() {
-  // Touch events for swipe
-  this.handle.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: true });
-  this.handle.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
-  this.handle.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: true });
-  
-  // Mouse events for desktop testing
-  this.handle.addEventListener('mousedown', this.handleMouseDown.bind(this));
-  document.addEventListener('mousemove', this.handleMouseMove.bind(this));
-  document.addEventListener('mouseup', this.handleMouseUp.bind(this));
-  
-  // Click to toggle
-  this.handle.addEventListener('click', this.toggleSheet.bind(this));
-}
-
-setupToolbarToggle() {
-  const toolbarHeader = document.getElementById('toolbarHeader');
-  const toolbar = document.getElementById('toolbar');
-  const toggle = document.getElementById('toolbarToggle');
-  
-  if (toolbarHeader && toolbar && toggle) {
-    // Set initial state - collapsed on mobile
-    toolbar.classList.remove('expanded');
-    toggle.textContent = '+';
-    
-    toolbarHeader.addEventListener('click', function() {
-      toolbar.classList.toggle('expanded');
-      toggle.textContent = toolbar.classList.contains('expanded') ? '–' : '+';
-    });
-  }
-}
-
-handleTouchStart(e) {
-  this.startY = e.touches[0].clientY;
-  this.isDragging = true;
-  this.sheet.style.transition = 'none';
-}
-
-handleTouchMove(e) {
-  if (!this.isDragging) return;
-  e.preventDefault();
-  
-  this.currentY = e.touches[0].clientY;
-  const deltaY = this.currentY - this.startY;
-  this.updateSheetPosition(deltaY);
-}
-
-handleTouchEnd(e) {
-  if (!this.isDragging) return;
-  
-  this.isDragging = false;
-  this.sheet.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
-  
-  const deltaY = this.currentY - this.startY;
-  this.determineEndState(deltaY);
-}
-
-handleMouseDown(e) {
-  this.startY = e.clientY;
-  this.isDragging = true;
-  this.sheet.style.transition = 'none';
-  e.preventDefault();
-}
-
-handleMouseMove(e) {
-  if (!this.isDragging) return;
-  
-  this.currentY = e.clientY;
-  const deltaY = this.currentY - this.startY;
-  this.updateSheetPosition(deltaY);
-}
-
-handleMouseUp(e) {
-  if (!this.isDragging) return;
-  
-  this.isDragging = false;
-  this.sheet.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
-  
-  const deltaY = this.currentY - this.startY;
-  this.determineEndState(deltaY);
-}
-
-updateSheetPosition(deltaY) {
-  const clampedDelta = Math.max(-window.innerHeight * 0.7, Math.min(window.innerHeight * 0.5, deltaY));
-  
-  let newTransform;
-  switch (this.currentState) {
-    case 'collapsed':
-      newTransform = `translateY(calc(100% - 80px + ${clampedDelta}px))`;
-      break;
-    case 'peek':
-      newTransform = `translateY(calc(100% - 120px + ${clampedDelta}px))`;
-      break;
-    case 'expanded':
-      newTransform = `translateY(calc(15vh + ${clampedDelta}px))`;
-      break;
-  }
-  
-  this.sheet.style.transform = newTransform;
-}
-
-determineEndState(deltaY) {
-  const threshold = 50;
-  
-  if (Math.abs(deltaY) > threshold) {
-    if (deltaY > 0) {
-      // Swiping down
-      if (this.currentState === 'expanded') {
-        this.setState(this.selectedDream ? 'peek' : 'collapsed');
-      } else if (this.currentState === 'peek') {
-        this.setState('collapsed');
-      }
-    } else {
-      // Swiping up
-      if (this.currentState === 'collapsed') {
-        this.setState('peek');
-      } else if (this.currentState === 'peek') {
-        this.setState('expanded');
-      }
-    }
-  } else {
-    this.setState(this.currentState);
-  }
-}
-
-setState(state) {
-  this.sheet.classList.remove('peek', 'expanded');
-  
-  if (state === 'peek') {
-    this.sheet.classList.add('peek');
-  } else if (state === 'expanded') {
-    this.sheet.classList.add('expanded');
-  }
-  
-  this.currentState = state;
-  this.sheet.style.transform = '';
-}
-
-toggleSheet() {
-  if (this.currentState === 'expanded') {
-    this.setState(this.selectedDream ? 'peek' : 'collapsed');
-  } else {
-    this.setState('expanded');
-  }
-}
-
-selectDream(dreamId, dreamData) {
-  this.selectedDream = dreamId;
-  
-  if (dreamData) {
-    this.dreamText.textContent = dreamData.text;
-    this.dreamId.textContent = `Dream #${dreamData.id}`;
-    this.title.textContent = `Dream #${dreamData.id}`;
-    this.subtitle.textContent = 'Swipe up to explore connections';
-    
-    this.noSelection.style.display = 'none';
-    this.dreamDisplay.style.display = 'block';
-    
-    // Populate similar dreams
-    this.populateSimilarDreams(dreamId);
-    
-    // Show peek state if collapsed
-    if (this.currentState === 'collapsed') {
-      this.setState('peek');
-    }
-  }
-}
-
-populateSimilarDreams(dreamId) {
-  // Find similar dreams based on your existing links data
-  const similarDreams = links
-    .filter(link => link.source === dreamId || link.target === dreamId)
-    .map(link => {
-      const otherId = link.source === dreamId ? link.target : link.source;
-      const dreamData = nodes.find(n => n.id === otherId);
-      return {
-        ...dreamData,
-        similarity: link.similarity
-      };
-    })
-    .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, 4); // Limit to top 4 similar dreams
-  
-  // Clear and populate list
-  this.similarList.innerHTML = '';
-  similarDreams.forEach(dream => {
-    const li = document.createElement('li');
-    li.className = 'similar-item';
-    li.innerHTML = `
-      <div class="similar-text">${dream.text}</div>
-      <div class="similar-score">Similarity: ${dream.similarity.toFixed(2)}</div>
-    `;
-    li.addEventListener('click', () => {
-      // When user clicks a similar dream, select it and center on it
-      this.selectDream(dream.id, dream);
-      centerOnDream(dream.id);
-      
-      // Update node highlighting
-      d3.selectAll('.node').classed('selected', false);
-      d3.selectAll('.node')
-        .filter(d => d.id === dream.id)
-        .classed('selected', true);
-    });
-    this.similarList.appendChild(li);
-  });
-}
-}
+} // End of main constellation code block
