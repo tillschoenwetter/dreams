@@ -16,11 +16,6 @@
 </head>
 <body>
   <canvas id="star-canvas" tabindex="-1"></canvas> <!-- canvas containing bg stars-->
-  <div class="logo-container">
-    <a href="/">
-      <img src="{{ url_for('static', filename='imgs/DreamAtlas_logo.svg') }}" alt="DreamAtlas Logo">
-    </a>
-  </div>
   {% if not user_dream %}
     <div class="menu">
       <a href="/about"> About </a>
@@ -82,6 +77,11 @@
       </div>
     </div>
   {% else %}
+    <div class="logo-container">
+      <a href="/">
+        <img src="{{ url_for('static', filename='imgs/DreamAtlas_logo.svg') }}" alt="DreamAtlas Logo">
+      </a>
+    </div>
     <!-- Constellation view -->
     <div class="constellation-container">
       <div class="another_dream">

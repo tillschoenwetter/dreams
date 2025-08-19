@@ -306,44 +306,22 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       .classed('selected', true);
   };
 
-  const link = container.append("g")
-    .attr("class", "links")
-    .selectAll("line")
-    .data(links)
-    .enter().append("line")
-    .attr("class", "link")
-    .style("stroke", "#ccc")
-    .style("stroke-width", function (d) {
-      const baseWidth = getStrokeWidth(d.similarity);
-      return (d.source === newDreamId || d.target === newDreamId) ? baseWidth * 2 : baseWidth;
-    })
-    .on("click", function (d) {
-      const sourceNode = nodes.find(n => n.id === d.source);
-      const targetNode = nodes.find(n => n.id === d.target);
-      const sourceX = xScale(sourceNode.x), sourceY = yScale(sourceNode.y);
-      const targetX = xScale(targetNode.x), targetY = yScale(targetNode.y);
-      const centerX = width / 2, centerY = height / 2;
-      const distSource = Math.hypot(sourceX - centerX, sourceY - centerY);
-      const distTarget = Math.hypot(targetX - centerX, targetY - centerY);
-      const chosen = distSource > distTarget ? sourceNode : targetNode;
-      const chosenX = xScale(chosen.x), chosenY = yScale(chosen.y);
-      const currentTransform = d3.zoomTransform(svg.node());
-      const currentScale = currentTransform.k;
-      const tx = width / 2 - chosenX * currentScale;
-      const ty = height / 2 - chosenY * currentScale;
-      svg.transition().duration(750)
-        .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(currentScale));
-    })
-    .on("mouseover", function (d) {
-      d3.select(this).transition().duration(100)
-        .style("stroke-width", getStrokeWidth(d.similarity) * 2);
-    })
-    .on("mouseout", function (d) {
-      d3.select(this).transition().duration(100)
-        .style("stroke-width", getStrokeWidth(d.similarity));
-    });
+  // Updated code for static/script.js - replace the existing link creation
+const link = container.append("g")
+.attr("class", "links")
+.selectAll("line")
+.data(links)
+.enter().append("line")
+.attr("class", "link")
+.style("stroke", "#ccc")
+.style("stroke-width", function (d) {
+  const baseWidth = getStrokeWidth(d.similarity);
+  return (d.source === newDreamId || d.target === newDreamId) ? baseWidth * 2 : baseWidth;
+})
+.style("pointer-events", "none"); // ← ADD THIS LINE to disable all interactions
 
-  const scoreExtent = d3.extent(nodes, d => d.score);
+
+const scoreExtent = d3.extent(nodes, d => d.score);
   if (scoreExtent[0] === scoreExtent[1]) {
     scoreExtent[0] *= 0.9;
     scoreExtent[1] *= 1.1;
@@ -479,6 +457,4 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         }
       }
     });
-  }
-
 } // End of main constellation code block
