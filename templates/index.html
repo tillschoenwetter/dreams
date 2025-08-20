@@ -115,7 +115,8 @@
         <div class="toolbar-content" id="toolbarContent">
           <!-- Add search input -->
           <div class="search-container" id="search-bar">
-            <input type="text" id="dreamSearch" placeholder="Search dreams..." />
+            <input type="text" id="dreamSearch" placeholder="Type keywords to search dreams..." />
+            <button type="button" id="clearSearch" class="clear-search-btn" title="Clear search">×</button>
           </div>
 
           <!-- Existing threshold slider -->
@@ -160,6 +161,26 @@
       </div>
       <svg id="constellation"></svg>
       <div id="tooltip" class="tooltip" style="display: none;"></div>
+      
+      <!-- Dream text box for full dream display -->
+      <div id="dreamTextBox">
+        <div class="box-header">
+          <h3 id="boxDreamTitle">Dream Text</h3>
+          <button class="modal-close" onclick="hideDreamTextBox()">×</button>
+        </div>
+        <div class="box-content" id="boxDreamContent">
+        </div>
+      </div>
+
+      <!-- Dream Modal for full dream display (like telescope page) -->
+      <div id="dreamModal">
+        <div class="modal-header">
+          <h3 id="modalDreamTitle">Dream Text</h3>
+          <button class="modal-close" id="modalCloseBtn">×</button>
+        </div>
+        <div class="modal-content" id="modalDreamContent">
+        </div>
+      </div>
 
       <!-- Constellation data -->
       <script>

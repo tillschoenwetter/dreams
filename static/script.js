@@ -283,11 +283,26 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     // Create HTML for valid matches
     const html = similarDreams.map(item => {
       const partner = nodes.find(n => n.id === item.id);
-      return partner ? 
-        `<li onclick='panelClick(${partner.id})' style='cursor:pointer;'>
-          ${partner.text}<br>
-          <small>Sim: ${item.similarity.toFixed(2)}</small>
-        </li>` : "";
+      if (!partner) return "";
+      
+      // Highlight search terms if there's an active search
+      let highlightedText = partner.text;
+      const searchInput = document.getElementById("dreamSearch");
+      if (searchInput && searchInput.value.trim()) {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const keywords = searchTerm.split(/[\s,]+/).filter(keyword => keyword.length > 0);
+        
+        // Highlight each keyword in the text
+        keywords.forEach(keyword => {
+          const regex = new RegExp(`(${keyword})`, 'gi');
+          highlightedText = highlightedText.replace(regex, '<mark class="search-highlight">$1</mark>');
+        });
+      }
+      
+      return `<li onclick='panelClick(${partner.id})' style='cursor:pointer;'>
+        ${highlightedText}<br>
+        <small>Sim: ${item.similarity.toFixed(2)}</small>
+      </li>`;
     }).join("");
 
     panel.innerHTML = `<ul>${html}</ul>`;
@@ -297,6 +312,10 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
 
   // Panel Click Function
   window.panelClick = function (dreamId) {
+    // Hide any open dream displays first
+    hideDreamModal();
+    hideDreamTextBox();
+    
     centerOnDream(dreamId, svg, xScale, yScale, zoom, width, height);
     updateSimilarPanel(dreamId);
     
@@ -369,6 +388,10 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     .on("click", function(d) {
       console.log("Node clicked:", d.id);
       
+      // Hide any open dream displays first
+      hideDreamModal();
+      hideDreamTextBox();
+      
       // Pass all the variables that centerOnDream needs
       centerOnDream(d.id, svg, xScale, yScale, zoom, width, height);
       
@@ -378,6 +401,13 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       d3.selectAll('.node').classed('selected', false);
       d3.select(this).classed('selected', true);
       console.log("Selection applied");
+      
+      // Show full dream modal (like telescope page)
+      showDreamModal(d);
+    })
+    .on("dblclick", function(d) {
+      // Show dream text box on double-click (alternative to modal)
+      showDreamTextBox(d);
     })
     .on("mouseover", function(d) {
       // Show tooltips and size changes on ALL devices
@@ -450,35 +480,214 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     }, 500);
   }
 
+  // Helper function to update search results display
+  function updateSearchResults(matchCount, keywords) {
+    let searchResultsDiv = document.getElementById("search-results");
+    
+    // Create search results display if it doesn't exist
+    if (!searchResultsDiv) {
+      searchResultsDiv = document.createElement("div");
+      searchResultsDiv.id = "search-results";
+      searchResultsDiv.className = "search-results";
+      
+      // Insert after the search input
+      const searchContainer = document.getElementById("search-bar");
+      searchContainer.appendChild(searchResultsDiv);
+    }
+    
+    // Get the matching dreams for display
+    const searchTerm = document.getElementById("dreamSearch").value.toLowerCase().trim();
+    const matchingDreams = nodes.filter(node => {
+      const nodeText = node.text.toLowerCase();
+      const keywords = searchTerm.split(/[\s,]+/).filter(keyword => keyword.length > 0);
+      
+      const allKeywordsPresent = keywords.every(keyword => nodeText.includes(keyword));
+      const anyKeywordPresent = keywords.some(keyword => nodeText.includes(keyword));
+      
+      return allKeywordsPresent || (anyKeywordPresent && searchTerm.length <= 20);
+    }).slice(0, 5); // Show first 5 matches
+    
+    // Create dream list HTML
+    let dreamsListHTML = "";
+    if (matchingDreams.length > 0) {
+      dreamsListHTML = `
+        <div class="search-dreams-list">
+          <h4>Top Matches:</h4>
+          ${matchingDreams.map(dream => {
+            let highlightedText = dream.text;
+            keywords.forEach(keyword => {
+              const regex = new RegExp(`(${keyword})`, 'gi');
+              highlightedText = highlightedText.replace(regex, '<mark class="search-highlight">$1</mark>');
+            });
+            
+            return `<div class="search-dream-item" onclick="panelClick(${dream.id})">
+              <span class="dream-id">#${dream.id}</span>
+              <span class="dream-text">${highlightedText}</span>
+            </div>`;
+          }).join("")}
+        </div>
+      `;
+    }
+    
+    // Update the display
+    searchResultsDiv.innerHTML = `
+      <div class="search-results-info">
+        <span class="match-count">${matchCount} dream${matchCount !== 1 ? 's' : ''} found</span>
+        <span class="keywords">Keywords: ${keywords.join(', ')}</span>
+      </div>
+      ${dreamsListHTML}
+    `;
+    searchResultsDiv.style.display = "block";
+  }
+
+  // Helper function to clear search results display
+  function clearSearchResults() {
+    const searchResultsDiv = document.getElementById("search-results");
+    if (searchResultsDiv) {
+      searchResultsDiv.style.display = "none";
+    }
+  }
+
   // Add search functionality
   const searchInput = document.getElementById("dreamSearch");
+  const clearSearchBtn = document.getElementById("clearSearch");
+  
   if (searchInput) {
+    let searchTimeout;
+    
     searchInput.addEventListener("input", function(e) {
-      const searchTerm = e.target.value.toLowerCase();
+      // Clear previous timeout
+      clearTimeout(searchTimeout);
       
-      // Reset all nodes
-      d3.selectAll(".node")
-        .classed("search-match", false)
-        .attr("fill", d => d.id === newDreamId ? "orange" : "#fff");
-      
-      if (searchTerm.length > 0) {
-        // Find matching nodes
-        const matches = nodes.filter(node => 
-          node.text.toLowerCase().includes(searchTerm)
-        );
-        
-        // Highlight matches
-        d3.selectAll(".node")
-          .filter(d => matches.some(m => m.id === d.id))
-          .classed("search-match", true);
-
-        // If we have matches, center on the first one
-        if (matches.length > 0) {
-          centerOnDream(matches[0].id);
-          updateSimilarPanel(matches[0].id);
-        }
+      // Show loading indicator
+      const searchResultsDiv = document.getElementById("search-results");
+      if (searchResultsDiv) {
+        searchResultsDiv.innerHTML = '<div class="search-loading">Searching...</div>';
+        searchResultsDiv.style.display = "block";
       }
+      
+      // Set a new timeout for search (300ms delay)
+      searchTimeout = setTimeout(() => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        
+        // Reset all nodes to default appearance
+        d3.selectAll(".node")
+          .classed("search-match", false)
+          .attr("fill", d => d.id === newDreamId ? "orange" : "#fff")
+          .attr("r", d => sizeScale(d.score));
+        
+        if (searchTerm.length > 0) {
+          // Split search term into keywords (split by spaces, commas, etc.)
+          const keywords = searchTerm.split(/[\s,]+/).filter(keyword => keyword.length > 0);
+          
+          // Find nodes that contain any of the keywords
+          const matches = nodes.filter(node => {
+            const nodeText = node.text.toLowerCase();
+            
+            // Check if all keywords are present (AND logic)
+            const allKeywordsPresent = keywords.every(keyword => nodeText.includes(keyword));
+            
+            // Also check for partial matches (OR logic for better results)
+            const anyKeywordPresent = keywords.some(keyword => nodeText.includes(keyword));
+            
+            // Return true if all keywords are present, or if at least one keyword is present and search term is short
+            return allKeywordsPresent || (anyKeywordPresent && searchTerm.length <= 20);
+          });
+          
+          // Highlight matching nodes with a different color and larger size
+          d3.selectAll(".node")
+            .filter(d => matches.some(m => m.id === d.id))
+            .classed("search-match", true)
+            .attr("fill", "#ff6b6b") // Highlight color for search matches
+            .attr("r", d => sizeScale(d.score) + 3); // Make matching nodes slightly larger
+          
+          // Update search results display
+          updateSearchResults(matches.length, keywords);
+          
+          // If we have matches, center on the first one
+          if (matches.length > 0) {
+            centerOnDream(matches[0].id);
+            updateSimilarPanel(matches[0].id);
+          }
+        } else {
+          // Clear search results display when search is empty
+          clearSearchResults();
+        }
+      }, 300); // 300ms delay
     });
   }
 
+  // Add clear search functionality
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener("click", function() {
+      searchInput.value = "";
+      
+      // Reset all nodes to default appearance
+      d3.selectAll(".node")
+        .classed("search-match", false)
+        .attr("fill", d => d.id === newDreamId ? "orange" : "#fff")
+        .attr("r", d => sizeScale(d.score));
+      
+      // Clear search results display
+      clearSearchResults();
+      
+      // Focus back to search input
+      searchInput.focus();
+    });
+  }
+
+  // Function to show full dream text modal (like telescope page)
+  function showDreamModal(dreamData) {
+    const modal = document.getElementById("dreamModal");
+    const title = document.getElementById("modalDreamTitle");
+    const content = document.getElementById("modalDreamContent");
+    
+    title.textContent = `Dream ${dreamData.id}`;
+    content.innerHTML = `<p>${dreamData.text}</p>`;
+    
+    modal.style.display = "block";
+    
+    // Add click handler for close button
+    const closeBtn = document.getElementById("modalCloseBtn");
+    closeBtn.onclick = function() {
+      hideDreamModal();
+    };
+    
+    // Close modal when clicking outside
+    modal.onclick = function(e) {
+      if (e.target === modal) {
+        hideDreamModal();
+      }
+    };
+  }
+
+  // Function to hide dream modal
+  function hideDreamModal() {
+    const modal = document.getElementById("dreamModal");
+    modal.style.display = "none";
+  }
+
+  // Function to show dream text box (like telescope page)
+  function showDreamTextBox(dreamData) {
+    const textBox = document.getElementById("dreamTextBox");
+    const title = document.getElementById("boxDreamTitle");
+    const content = document.getElementById("boxDreamContent");
+    
+    title.textContent = `Dream ${dreamData.id}`;
+    content.textContent = dreamData.text;
+    
+    textBox.classList.add("show");
+  }
+
+  // Function to hide dream text box
+  function hideDreamTextBox() {
+    const textBox = document.getElementById("dreamTextBox");
+    textBox.classList.remove("show");
+  }
+
+  // Make functions globally accessible
+  window.showDreamModal = showDreamModal;
+  window.hideDreamModal = hideDreamModal;
+  window.showDreamTextBox = showDreamTextBox;
+  window.hideDreamTextBox = hideDreamTextBox;
 } // End of main constellation code block
