@@ -305,7 +305,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       .filter(d => d.id === dreamId)
       .classed('selected', true);
   };
-
+}
   // Updated code for static/script.js - replace the existing link creation
 const link = container.append("g")
 .attr("class", "links")
