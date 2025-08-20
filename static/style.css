@@ -59,6 +59,19 @@ textarea {
   cursor: text;
 }
 
+/* Motion trail styling */
+.motion-trail line {
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px rgba(74, 158, 255, 0.6));
+  transition: opacity 0.1s ease-out;
+}
+
+.motion-trail circle {
+  pointer-events: none;
+  filter: drop-shadow(0 0 5px rgba(74, 158, 255, 0.8));
+  transition: all 0.1s ease-out;
+}
+
 p {
   font-family: 'Inconsolata', normal;
 }
