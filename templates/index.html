@@ -16,6 +16,11 @@
 </head>
 <body>
   <canvas id="star-canvas" tabindex="-1"></canvas> <!-- canvas containing bg stars-->
+  <div class="logo-container">
+    <a href="/">
+      <img src="{{ url_for('static', filename='imgs/DreamAtlas_logo.svg') }}" alt="DreamAtlas Logo">
+    </a>
+  </div>
   {% if not user_dream %}
     <div class="menu">
       <a href="/about"> About </a>
@@ -77,11 +82,6 @@
       </div>
     </div>
   {% else %}
-    <div class="logo-container">
-      <a href="/">
-        <img src="{{ url_for('static', filename='imgs/DreamAtlas_logo.svg') }}" alt="DreamAtlas Logo">
-      </a>
-    </div>
     <!-- Constellation view -->
     <div class="constellation-container">
       <div class="another_dream">
@@ -115,9 +115,9 @@
         <div class="toolbar-content" id="toolbarContent">
           <!-- Add search input -->
           <div class="search-container" id="search-bar">
-            <input type="text" id="dreamSearch" placeholder="Search dreams..." />
+            <input type="text" id="dreamSearch" placeholder="Type keywords to search dreams..." />
+            <button type="button" id="clearSearch" class="clear-search-btn" title="Clear search">×</button>
           </div>
-
           <!-- Existing threshold slider -->
           <div class="threshold-slider" id="search-slider">
             <label for="similarityRange">Constellation Visibility: <span id="thresholdValue">0.35</span></label>

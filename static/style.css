@@ -265,6 +265,7 @@ button {
   stroke: #ffd700 !important; /* Force gold stroke */
   stroke-width: 3px !important; /* Force thick stroke */
 }
+
 /* ↓ Header ↓ */
 .header {
   position: absolute;
@@ -354,48 +355,276 @@ button {
   background: rgba(100, 100, 100, 0.8);
 }
 
-/* —————— Toolbar ———————*/
+/* ———————————————————— Search function ————————————————— */
+/* Search bar */
+.search-container {
+  position: relative;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 0 12px;
+  color: #ddd;
+  height: 45px; /* Same height */
+  min-width: 250px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.search-container input {
+  background: transparent;
+  border: none;
+  color: #ddd;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  font-family: 'Inconsolata', monospace;
+  font-size: 13px;
+}
+
+.search-container input::placeholder {
+  color: #666;
+  font-family: 'Inconsolata', monospace;
+}
+
+
+
+/* Clear search button */
+.clear-search-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 6px;
+  margin-left: 8px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  height: auto;
+}
+
+.clear-search-btn:hover {
+  color: #999;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+
+.clear-search-btn:active {
+  transform: scale(0.95);
+}
+
+/* Search results display */
+.search-results {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #ddd;
+  z-index: 1000;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  max-height: 300px;
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: searchResultsSlideIn 0.2s ease-out forwards;
+}
+
+.search-results::before {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(255, 107, 107, 0.4);
+}
+
+@keyframes searchResultsSlideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom scrollbar for search results */
+.search-results::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-results::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+  background: rgba(255, 107, 107, 0.4);
+  border-radius: 3px;
+}
+
+.search-results::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 107, 107, 0.6);
+}
+
+.search-results-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 107, 107, 0.2);
+  margin-bottom: 8px;
+}
+
+.match-count {
+  font-weight: bold;
+  color: #ff6b6b;
+  font-size: 13px;
+}
+
+.keywords {
+  color: #999;
+  font-style: italic;
+  font-size: 11px;
+}
+
+/* Search dreams list */
+.search-dreams-list {
+  margin-top: 0;
+}
+
+.search-dreams-list h4 {
+  margin: 0 0 8px 0;
+  color: #ddd;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #ff6b6b;
+}
+
+.search-dream-item {
+  padding: 8px 10px;
+  margin: 1px 0;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  position: relative;
+}
+
+.search-dream-item:hover {
+  background: rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 107, 107, 0.3);
+  transform: translateX(2px);
+}
+
+.search-dream-item:active {
+  transform: translateX(2px) scale(0.98);
+}
+
+.dream-id {
+  display: inline-block;
+  font-size: 10px;
+  color: #ff6b6b;
+  font-weight: bold;
+  background: rgba(255, 107, 107, 0.1);
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dream-text {
+  display: block;
+  font-size: 11px;
+  color: #ddd;
+  line-height: 1.3;
+  font-weight: 300;
+}
+
+/* Search loading indicator */
+.search-loading {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 20px;
+}
+
+/* Highlight search matches */
+.node.search-match {
+  filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.6));
+}
+
+/* Search term highlighting in text */
+.search-highlight {
+  background-color: rgba(255, 107, 107, 0.3);
+  color: #fff;
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-weight: bold;
+}
+
+
+/* ——————————————————— Toolbar ————————————————————*/
 .toolbar {
   position: fixed;
   bottom: 20px;
-  left: 0; right: 0;              /* span the viewport */
+  left: 0; 
+  right: 0;
   display: flex;
-  flex-direction: row-reverse;         /* allow header + content */
-  align-items: center; /*TEMP: before it was flex-end*/
-  gap: 6px;
-  padding: 10px 20px;
-  border-radius: 8px;
-  box-sizing: border-box;
+  flex-direction: row-reverse; /* Keep header on right, content on left */
+  align-items: center; /* Center align all items */
+  gap: 12px;
+  padding: 0 20px;
   font-family: 'Inconsolata', monospace;
   font-size: 13px;
   z-index: 101;
+  height: 45px; /* Fixed height for all elements */
 }
 
 .toolbar-header {
-  background: #222;
+  background: rgba(34, 34, 34, 0.8);
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
+  padding: 0 12px;
   border: 1px solid #444;
   border-radius: 4px;
   color: #ddd;
-  min-height: 23px; /* super sketchy way of making things the same height*/
+  height: 45px; /* Same height as toolbar */
+  min-width: 80px;
+  flex-shrink: 0; /* Prevent shrinking */
+  box-sizing: border-box;
 }
+
 .toolbar-content {
   display: flex;
+  flex-direction: row; /* Horizontal layout for content */
+  align-items: center;
   gap: 12px;
+  height: 45px; /* Same height as toolbar */
 }
+
 .toolbar.collapsed .toolbar-content {
   display: none;
-  z-index: 90;
 }
+
 /* When toolbar is collapsed: disable its interactions */
 .toolbar.collapsed {
   pointer-events: none;
-  padding: 0;
-  margin: 0;
+  padding: 0 20px; /* Keep padding */
 }
 
 /* But keep the header clickable to reopen it */
@@ -404,41 +633,58 @@ button {
 }
 
 
+
 /* Threshold slider*/
 .threshold-slider {
-  position: static;
-  right: 20px;
   background: rgba(0, 0, 0, 0.8);
   border: 1px solid #444;
   border-radius: 4px;
-  padding: 10px;
+  padding: 8px 12px;
   color: #ddd;
-  z-index: 10;
-}
-/* Search bar */
-.search-container {
-  position: static;
-  left: 20px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  padding: 10px;
-  color: #ddd;
-  z-index: 10;
-  background: rgba(0, 0, 0, 0.8);
-}
-.search-container input {
-  background: #000;
-  border: none;
-  color: #999; /* dark grey text */
-  padding: 5px 8px;
-  width: 200px;
-  outline: none;
+  height: 45px; /* Same height */
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
-.search-container input::placeholder {
-  color: #666; 
-  font-family: 'Inconsolata', monospace;
+.threshold-slider label {
+  font-size: 10px;
+  color: #aaa;
+  margin: 0 0 2px 0;
+  line-height: 1;
 }
+
+.threshold-slider input[type="range"] {
+  width: 100%;
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.threshold-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.threshold-slider input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
 
 /* SVG constellation */
 svg {
@@ -451,14 +697,22 @@ svg {
 .tooltip {
   position: absolute;
   text-align: left;
-  padding: 10px;
-  font: 12px sans-serif;
-  background: rgba(255,255,255,0.9);
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  line-height: 1.3;
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  border-radius: 6px;
   pointer-events: none;
-  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-  color: #333;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  color: #ddd;
+  backdrop-filter: blur(10px);
+  max-width: 300px;
+  max-height: calc(1.3em * 3 + 16px); /* 3 lines of text + padding */
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .spinner-overlay {
@@ -571,86 +825,160 @@ footer {
     z-index: 90;         /* stays above canvas */
   }
   /* --- TOOLBAR --- */
+  /* EXPANDED STATE - When toolbar is open */
   .toolbar {
     position: fixed;
-    top: 10px;
-    left: 0;
-    right: 10px;
-    width: 100%;
-    flex-direction: column;   /* stack vertically */
-    align-items: stretch;     /* let children fill width */
-    padding: 10px;
-    max-height: 25px;
-    z-index: 100; /* ensure it stays above constellation */
-  }
-  .toolbar-header {
-    max-width: 40px;
-  }
-  /* Stack toolbar contents vertically */
-  .toolbar-content {
-    display: none; /*hidden*/
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: auto;
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-end; /* Align everything to the right */
     gap: 10px;
-    left: 10px;
-    right: 10px
+    padding: 0;
+    height: auto;
+    z-index: 100;
   }
-  .threshold-slider input[type="range"] {
-    width: 100%;        /* take full width of the container */
-    max-width: none;    /* remove any max width restriction */
+  
+  .toolbar-header {
+    background: rgba(34, 34, 34, 0.8);
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    color: #ddd;
+    height: 40px;
+    width: 80px; /* Fixed width for header */
+    min-width: 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-sizing: border-box;
   }
-
-  /* ————— Mobile: shrink toolbar down to just the header ————— */
+  
+  .toolbar-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* Make content items full width */
+    gap: 10px;
+    width: 100%; /* Full width for content */
+    height: auto;
+  }
+  
+  /* COLLAPSED STATE - When toolbar is minimized */
   .toolbar.collapsed {
-    /* 1) shrink-wrap instead of full-width flex */
-    display: inline-flex;
-    max-height: 30px;
-
-    /* 2) anchor top-right, cancel left/right spanning */
     position: fixed;
     top: 10px;
     right: 10px;
-    bottom: auto;
-    left: auto ;
-
-    /* 3) force it to size to its contents only */
-    width: auto ;
-    height: auto;
+    left: auto;
+    width: 80px;
+    height: 40px;
     padding: 0;
     margin: 0;
-    overflow: visible;
-
-    /* let clicks pass through everything but the header */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column; /* Keep column but it only has header */
     pointer-events: none;
-    z-index: 100;
   }
-
-  /* header itself stays visible, clickable, and styled */
+  
   .toolbar.collapsed .toolbar-header {
-    display: inline-flex;  /* match the parent shrink-wrap */
-    pointer-events: auto;  /* re-enable clicks here */
+    pointer-events: auto;
+    width: 80px;
+    height: 40px;
     margin: 0;
   }
-
-  /* hide the content area completely */
+  
   .toolbar.collapsed .toolbar-content {
     display: none;
   }
 
-  /* Search container + input full width */
+  /* Search container for mobile */
   .search-container {
-    left: 10px;
-    right: 10px
+    position: relative;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 0 12px;
+    color: #ddd;
+    height: 40px;
+    width: 100%; /* Full width */
+    min-width: auto;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
   }
+  
   .search-container input {
-    font-size: 16px; /* touch-friendly */
+    background: transparent;
+    border: none;
+    color: #ddd;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    outline: none;
+    font-family: 'Inconsolata', monospace;
+    font-size: 16px; /* Larger for mobile */
+  }
+  /* Hide search results banner on mobile */
+  .search-results {
+    display: none !important;
+  }
+  /* Threshold slider for mobile */
+  .threshold-slider {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 8px 12px;
+    color: #ddd;
+    height: 40px;
+    width: 100%; /* Full width */
+    min-width: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+  
+  .threshold-slider label {
+    font-size: 10px;
+    color: #aaa;
+    margin: 0 0 2px 0;
+    line-height: 1;
+  }
+  
+  .threshold-slider input[type="range"] {
+    width: 100%;
+    height: 6px; /* Slightly larger for mobile touch */
+    background: #333;
+    border-radius: 3px;
+    outline: none;
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  .threshold-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px; /* Larger for mobile touch */
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  
+  .threshold-slider input[type="range"]::-moz-range-thumb {
+    width: 20px; /* Larger for mobile touch */
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
   }
 
-  /* Slider also full width */
-  .threshold-slider {
-    left: 10px;
-    right: 10px
-  }
 
   /* Hide desktop panel on mobile */
   .similar-panel {
@@ -774,7 +1102,7 @@ footer {
     border-radius: 12px;
   }
 
-  /* Similar dreams list */
+  /* ——————— Similar dreams list ———————— */
   .similar-dreams h4 {
     font-size: 14px;
     margin-bottom: 15px;
@@ -849,7 +1177,6 @@ footer {
   .another_dream p { 
     display: none; /* hide "for questions contact..." on mobile */
   }
-  
 }
   
 
