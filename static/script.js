@@ -60,6 +60,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       toolbarToggle.textContent = isOpen ? "+" : "–";
     });
   }
+  
 
   const width = window.innerWidth;
   const height = window.innerHeight;
@@ -577,6 +578,373 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       // Focus back to search input
       searchInput.focus();
     });
+  }
+  // ******* MOBILE BOTTOM DRAWER ******
+  // Only initialize bottom drawer on mobile devices
+  const isMobile = window.innerWidth <= 768;
+
+  if (isMobile) {
+    class DreamBottomDrawer {
+      constructor() {
+        this.drawer = document.getElementById('bottomSheet');
+        this.container = document.getElementById('bottomSheetContainer');
+        this.handle = document.getElementById('sheetHandle');
+        this.content = document.getElementById('sheetContent');
+        this.noSelection = document.getElementById('noSelection');
+        this.dreamDisplay = document.getElementById('dreamDisplay');
+        
+        // Dream content elements
+        this.dreamText = document.getElementById('dreamText');
+        this.dreamId = document.getElementById('dreamId');
+        this.dreamSimilarity = document.getElementById('dreamSimilarity');
+        this.similarList = document.getElementById('similarList');
+        
+        this.isOpen = true;
+        this.currentState = 'peek'; // 'closed', 'peek', 'expanded'
+        this.selectedDreamId = null;
+        
+        // Touch tracking
+        this.startY = 0;
+        this.currentY = 0;
+        this.isDragging = false;
+        this.startTime = 0;
+        
+        // Only initialize if all elements exist
+        if (this.drawer && this.container && this.handle) {
+          this.init();
+        }
+      }
+
+      init() {
+        // Touch events for mobile
+        this.setState('peek'); // initially at peek
+        this.handle.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+        this.drawer.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+        this.drawer.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+        this.drawer.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: false });
+        
+        // Mouse events for desktop testing
+        this.handle.addEventListener('mousedown', this.handleMouseStart.bind(this));
+        this.drawer.addEventListener('mousedown', this.handleMouseStart.bind(this));
+        document.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        document.addEventListener('mouseup', this.handleMouseEnd.bind(this));
+
+        // Handle clicks on the handle
+        this.handle.addEventListener('click', this.toggleDrawer.bind(this));
+        
+        // Close drawer when clicking outside (on constellation)
+        const constellation = document.getElementById('constellation');
+        if (constellation) {
+          constellation.addEventListener('click', (e) => {
+            // Only close if clicking on the background, not on nodes
+            if (e.target === constellation) {
+              this.setState('closed');
+            }
+          });
+        }
+
+        // Prevent body scroll when drawer is open
+        this.drawer.addEventListener('touchmove', (e) => {
+          if (this.isOpen && this.drawer.scrollTop === 0 && e.touches[0].clientY > this.startY) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+
+        console.log('DreamBottomDrawer initialized');
+      }
+
+      handleTouchStart(e) {
+        // Only handle touch on the handle or when at top of scroll
+        if (e.target === this.handle || this.drawer.scrollTop === 0) {
+          this.startDrag(e.touches[0].clientY);
+        }
+      }
+
+      handleTouchMove(e) {
+        if (!this.isDragging) return;
+        
+        // Prevent default only when dragging the drawer itself
+        if (this.drawer.scrollTop === 0) {
+          e.preventDefault();
+        }
+        
+        this.updateDrag(e.touches[0].clientY);
+      }
+
+      handleTouchEnd(e) {
+        this.endDrag();
+      }
+
+      handleMouseStart(e) {
+        // Only handle mouse on the handle
+        if (e.target === this.handle || e.target.closest('#sheetHandle')) {
+          this.startDrag(e.clientY);
+        }
+      }
+
+      handleMouseMove(e) {
+        if (!this.isDragging) return;
+        this.updateDrag(e.clientY);
+      }
+
+      handleMouseEnd(e) {
+        this.endDrag();
+      }
+
+      startDrag(clientY) {
+        this.isDragging = true;
+        this.startY = clientY;
+        this.currentY = clientY;
+        this.startTime = Date.now();
+        
+        // Remove transition during drag
+        this.drawer.style.transition = 'none';
+      }
+
+      updateDrag(clientY) {
+        if (!this.isDragging) return;
+        
+        this.currentY = clientY;
+        const deltaY = clientY - this.startY;
+        const screenHeight = window.innerHeight;
+        
+        // Calculate the new position based on current state
+        let newTransformY;
+        
+        if (this.currentState === 'closed') {
+          // Dragging from closed state (can only go up)
+          const closedPosition = 100 - (80 / screenHeight * 100); // Default closed position
+          newTransformY = Math.max(15, Math.min(closedPosition, closedPosition - (deltaY / screenHeight * 100)));
+        } else if (this.currentState === 'peek') {
+          // Dragging from peek state
+          const peekPosition = 100 - (120 / screenHeight * 100); // Peek position
+          newTransformY = Math.max(15, Math.min(100 - (80 / screenHeight * 100), peekPosition + (deltaY / screenHeight * 100)));
+        } else { // expanded
+          // Dragging from expanded state
+          newTransformY = Math.max(15, Math.min(100 - (80 / screenHeight * 100), 15 + (deltaY / screenHeight * 100)));
+        }
+        
+        this.drawer.style.transform = `translateY(${newTransformY}vh)`;
+      }
+
+      endDrag() {
+        if (!this.isDragging) return;
+        
+        this.isDragging = false;
+        
+        // Restore transition
+        this.drawer.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
+        
+        // Calculate velocity
+        const deltaY = this.currentY - this.startY;
+        const deltaTime = Date.now() - this.startTime;
+        const velocity = Math.abs(deltaY) / deltaTime; // pixels per ms
+        
+        // Determine final state based on drag distance and velocity
+        if (velocity > 0.8) {
+          // Fast swipe
+          if (deltaY > 0) {
+            // Swiping down
+            if (this.currentState === 'expanded') {
+              this.setState('peek');
+            } else {
+              this.setState('closed');
+            }
+          } else {
+            // Swiping up
+            if (this.currentState === 'closed') {
+              this.setState('peek');
+            } else {
+              this.setState('expanded');
+            }
+          }
+        } else {
+          // Slow drag - use distance threshold
+          const dragDistance = Math.abs(deltaY);
+          const threshold = window.innerHeight * 0.15; // 15% of screen height
+          
+          if (dragDistance > threshold) {
+            if (deltaY > 0) {
+              // Dragging down
+              if (this.currentState === 'expanded') {
+                this.setState('peek');
+              } else {
+                this.setState('closed');
+              }
+            } else {
+              // Dragging up
+              if (this.currentState === 'closed') {
+                this.setState('peek');
+              } else {
+                this.setState('expanded');
+              }
+            }
+          } else {
+            // Return to current state
+            this.setState(this.currentState);
+          }
+        }
+      }
+
+      setState(state) {
+        this.currentState = state;
+        
+        // Remove all state classes
+        this.drawer.classList.remove('peek', 'expanded');
+        
+        // Clear any inline transform
+        this.drawer.style.transform = '';
+        
+        switch (state) {
+          case 'closed':
+            this.isOpen = false;
+            // Default closed state is handled by CSS
+            break;
+          case 'peek':
+            this.isOpen = true;
+            this.drawer.classList.add('peek');
+            break;
+          case 'expanded':
+            this.isOpen = true;
+            this.drawer.classList.add('expanded');
+            break;
+        }
+        
+        console.log('Drawer state changed to:', state);
+      }
+
+      toggleDrawer() {
+        if (this.currentState === 'peek') {
+          this.setState('expanded');
+        } else if (this.currentState === 'expanded') {
+          this.setState('closed');
+        } else {
+          this.setState('peek');
+        }
+      }
+
+      showDream(dreamData) {
+        this.selectedDreamId = dreamData.id;
+        
+        // Update dream content
+        if (this.dreamText) this.dreamText.textContent = dreamData.text;
+        if (this.dreamId) this.dreamId.textContent = `Dream ${dreamData.id}`;
+        if (this.dreamSimilarity) this.dreamSimilarity.textContent = 'Selected';
+        
+        // Show dream display, hide no selection
+        if (this.noSelection) this.noSelection.style.display = 'none';
+        if (this.dreamDisplay) this.dreamDisplay.style.display = 'block';
+        
+        // Update similar dreams
+        this.updateSimilarDreams(dreamData.id);
+        
+        // Open drawer to peek state if closed
+        if (this.currentState === 'closed') {
+          this.setState('peek');
+        }
+      }
+
+      updateSimilarDreams(dreamId) {
+        if (!this.similarList || typeof nodes === 'undefined' || typeof links === 'undefined') return;
+        
+        // Get similar dreams (reuse logic from desktop version)
+        const otherNodes = nodes.filter(n => n.id !== dreamId);
+        const similarDreams = otherNodes.map(node => {
+          const link = links.find(l =>
+            (l.source === dreamId && l.target === node.id) ||
+            (l.target === dreamId && l.source === node.id)
+          );
+          return {
+            id: node.id,
+            text: node.text,
+            similarity: link ? link.similarity : 0
+          };
+        })
+        .filter(d => d.similarity > 0)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 4);
+
+        // Clear and populate similar dreams list
+        this.similarList.innerHTML = '';
+        
+        if (similarDreams.length === 0) {
+          this.similarList.innerHTML = '<li style="color: #888; font-style: italic;">No similar dreams found</li>';
+          return;
+        }
+
+        similarDreams.forEach(dream => {
+          const li = document.createElement('li');
+          li.className = 'similar-item';
+          li.innerHTML = `
+            <div class="similar-text">${dream.text}</div>
+            <div class="similar-score">Similarity: ${dream.similarity.toFixed(2)}</div>
+          `;
+          
+          // Add click handler to navigate to similar dream
+          li.addEventListener('click', () => {
+            // Center on the dream in the constellation
+            if (typeof panelClick === 'function') {
+              panelClick(dream.id);
+            }
+            
+            // Update drawer content
+            const dreamData = nodes.find(n => n.id === dream.id);
+            if (dreamData) {
+              this.showDream(dreamData);
+            }
+          });
+          
+          this.similarList.appendChild(li);
+        });
+      }
+
+      hideDream() {
+        this.selectedDreamId = null;
+        
+        // Show no selection, hide dream display
+        if (this.noSelection) this.noSelection.style.display = 'block';
+        if (this.dreamDisplay) this.dreamDisplay.style.display = 'none';
+        
+        // Close drawer
+        this.setState('closed');
+      }
+
+      open() {
+        this.setState('peek');
+      }
+
+      close() {
+        this.setState('closed');
+      }
+    }
+
+    // Initialize the drawer
+    const dreamDrawer = new DreamBottomDrawer();
+
+    // Integrate with existing node click functionality
+    // Override the existing mobile node click behavior
+    if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
+      // Wait for DOM to be ready
+      setTimeout(() => {
+        // Find all constellation nodes and add mobile-specific click handlers
+        d3.selectAll('.node').on('click.mobile', function(d) {
+          console.log('Mobile node clicked:', d.id);
+          
+          // Show dream in bottom drawer
+          dreamDrawer.showDream(d);
+          
+          // Still call the existing panelClick functionality for centering
+          if (typeof panelClick === 'function') {
+            panelClick(d.id);
+          }
+        });
+      }, 1000); // Wait for D3 to finish rendering
+    }
+
+    // Make drawer globally accessible
+    window.dreamDrawer = dreamDrawer;
+
+    console.log('Mobile bottom drawer initialized');
   }
 
 

@@ -867,7 +867,9 @@ footer {
     gap: 10px;
     width: 100%; /* Full width for content */
     height: auto;
+    display: none;
   }
+
   
   /* COLLAPSED STATE - When toolbar is minimized */
   .toolbar.collapsed {
@@ -1007,7 +1009,7 @@ footer {
     background: rgba(0,0,0,0.95);
     backdrop-filter: blur(20px);
     border-radius: 16px 16px 0 0;
-    transform: translateY(calc(100% - 80px)); /* Collapsed by default */
+    transform: translateY(calc(100% - 200px)); /* Peek by default */
     transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     pointer-events: auto;
     max-height: 80vh;
@@ -1021,7 +1023,8 @@ footer {
   }
 
   .bottom-sheet.expanded {
-    transform: translateY(15vh);
+    transform: translateY(5vh); /* Only 5% from top */
+    max-height: 95vh;
   }
 
   /* Sheet handle */
@@ -1086,6 +1089,11 @@ footer {
     line-height: 1.6;
     margin-bottom: 20px;
     color: rgba(255,255,255,0.9);
+    max-height: 120px; /* Preview in peek state */
+    overflow: hidden;
+  }
+  .bottom-sheet.expanded .dream-text {
+    max-height: none; /* Full text in expanded */
   }
 
   .dream-meta {
@@ -1177,6 +1185,284 @@ footer {
   /* --- HIDE CLUTTER --- */
   .another_dream p { 
     display: none; /* hide "for questions contact..." on mobile */
+  }
+
+  /* ——— BOTTOM DRAWER ———*/
+  /* Show bottom sheet container on mobile */
+  .bottom-sheet-container {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 30;
+  }
+
+  /* Bottom sheet main container */
+  .bottom-sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px 16px 0 0;
+    transform: translateY(calc(100% - 80px)); /* Collapsed by default */
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    pointer-events: auto;
+    max-height: 85vh;
+    min-height: 80px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+    will-change: transform;
+    touch-action: pan-y;
+  }
+
+  /* Sheet states */
+  .bottom-sheet.peek {
+    transform: translateY(calc(100% - 120px));
+  }
+
+  .bottom-sheet.expanded {
+    transform: translateY(15vh);
+  }
+
+  /* Sheet handle */
+  .sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 2px;
+    margin: 12px auto;
+    cursor: grab;
+    transition: background 0.2s ease;
+    touch-action: none;
+  }
+
+  .sheet-handle:active {
+    cursor: grabbing;
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  /* Sheet header */
+  .sheet-header {
+    padding: 0 20px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    user-select: none;
+    pointer-events: none; /* Prevent interference with drag */
+  }
+
+  .sheet-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #fff;
+    font-family: 'Archivo', sans-serif;
+  }
+
+  /* Sheet content */
+  .sheet-content {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(70vh - 120px);
+    -webkit-overflow-scrolling: touch;
+  }
+  /* No selection state */
+  .no-selection {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    font-size: 14px;
+    font-family: 'Inconsolata', monospace;
+  }
+
+  /* Dream display */
+  .dream-display {
+    display: none;
+  }
+
+  .dream-display.active {
+    display: block;
+  }
+
+  .dream-text {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Inconsolata', monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .dream-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: 'Inconsolata', monospace;
+  }
+
+  .similarity-score {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: bold;
+  }
+
+  /* Similar dreams section */
+  .similar-dreams {
+    margin-top: 20px;
+  }
+
+  .similar-dreams h4 {
+    font-size: 14px;
+    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Archivo', sans-serif;
+  }
+
+  .similar-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .similar-item {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    touch-action: manipulation;
+  }
+
+  .similar-item:hover,
+  .similar-item:active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .similar-item:active {
+    transform: translateY(0);
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .similar-text {
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Inconsolata', monospace;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .similar-score {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: 'Inconsolata', monospace;
+  }
+
+  /* Improve touch targets */
+  .similar-item {
+    min-height: 44px; /* iOS recommended touch target size */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Scrollbar styling for webkit browsers */
+  .sheet-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .sheet-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  .sheet-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+
+  .sheet-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Prevent text selection during drag */
+  .bottom-sheet * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Allow text selection in content areas */
+  .dream-text,
+  .similar-text {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+
+  /* Performance optimizations */
+  .bottom-sheet {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Safe area handling for devices with notches */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .sheet-content {
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+  }
+
+  /* Responsive adjustments for smaller screens */
+  @media (max-height: 600px) {
+    .bottom-sheet {
+      max-height: 90vh;
+    }
+    
+    .bottom-sheet.expanded {
+      transform: translateY(10vh);
+    }
+    
+    .sheet-content {
+      max-height: calc(80vh - 120px);
+    }
+  }
+
+  /* Very small screens */
+  @media (max-height: 500px) {
+    .bottom-sheet.expanded {
+      transform: translateY(5vh);
+    }
+    
+    .sheet-content {
+      max-height: calc(85vh - 120px);
+      padding: 15px;
+    }
+    
+    .dream-text {
+      font-size: 14px;
+      line-height: 1.5;
+    }
   }
 }
   
