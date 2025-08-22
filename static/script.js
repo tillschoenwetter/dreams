@@ -197,7 +197,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       const clamped = Math.max(0.5, similarity);
       return 0.01 + ((clamped - 0.5) / 0.2) * (0.1 - 0.001);
     } else {
-      return 0.1 + ((similarity - 0.7) / 0.3) * (3 - 0.1);
+      return 0.1 + ((similarity - 0.7) / 0.3) * (2 - 0.1);
     }
   }
 

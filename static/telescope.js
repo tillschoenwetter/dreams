@@ -111,7 +111,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     function getStrokeWidth(similarity) {
         return similarity < 0.7
             ? 0.01 + ((Math.max(0.5, similarity) - 0.5) / 0.2) * (0.1 - 0.001)
-            : 0.1 + ((similarity - 0.7) / 0.3) * (3 - 0.1);
+            : 0.1 + ((similarity - 0.7) / 0.3) * (2 - 0.1);
     }
 
     // Center camera on a node
