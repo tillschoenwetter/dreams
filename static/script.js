@@ -79,6 +79,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       updateSimilarPanel(null);
       d3.select("#tooltip").style("display", "none");
       d3.selectAll('.node').classed('selected', false);
+      updateLinkColors(null); // Reset all links to default color
     })
     .lower();
 
@@ -200,6 +201,23 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       return 0.1 + ((similarity - 0.7) / 0.3) * (2 - 0.1);
     }
   }
+  // link of selecter dream turns yellow
+  function updateLinkColors(selectedDreamId) {
+    d3.selectAll(".link")
+      .style("stroke", function(d) {
+        if (selectedDreamId && (d.source === selectedDreamId || d.target === selectedDreamId)) {
+          return "#ffd700"; // Yellow/gold for connected links
+        }
+        return "#ccc"; // Default gray
+      })
+      .style("stroke-width", function(d) {
+        const baseWidth = getStrokeWidth(d.similarity);
+        if (selectedDreamId && (d.source === selectedDreamId || d.target === selectedDreamId)) {
+          return baseWidth * 1.5; // Make connected links thicker
+        }
+        return (d.source === newDreamId || d.target === newDreamId) ? baseWidth * 2 : baseWidth;
+      });
+  }
 
   function centerOnDream(dreamId, svgElement, xScaleFunc, yScaleFunc, zoomFunc, widthVal, heightVal) {
     console.log("Centering on dream:", dreamId);
@@ -306,6 +324,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     d3.selectAll('.node')
       .filter(d => d.id === dreamId)
       .classed('selected', true);
+      updateLinkColors(dreamId);
   };
 
   const link = container.append("g")
@@ -354,7 +373,10 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       console.log("Applying selection to dream:", d.id);
       d3.selectAll('.node').classed('selected', false);
       d3.select(this).classed('selected', true);
+      updateLinkColors(d.id);
+
       console.log("Selection applied");
+
     })
     .on("mouseover", function(d) {
       // Show tooltips and size changes on ALL devices
