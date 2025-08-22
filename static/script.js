@@ -78,6 +78,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     .on("click", () => {
       updateSimilarPanel(null);
       d3.select("#tooltip").style("display", "none");
+      d3.selectAll('.node').classed('selected', false);
     })
     .lower();
 
