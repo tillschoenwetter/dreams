@@ -600,7 +600,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         this.similarList = document.getElementById('similarList');
         
         this.isOpen = true;
-        this.currentState = 'peek'; // 'closed', 'peek', 'expanded'
+        this.currentState = 'peek'; // Only 'peek' or 'expanded' now
         this.selectedDreamId = null;
         
         // Touch tracking
@@ -638,24 +638,20 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
           constellation.addEventListener('click', (e) => {
             // Only close if clicking on the background, not on nodes
             if (e.target === constellation) {
-              this.setState('closed');
+              this.setState('peek'); // Changed from 'closed' to 'peek'
             }
           });
         }
-
-        // Prevent body scroll when drawer is open
-        this.drawer.addEventListener('touchmove', (e) => {
-          if (this.isOpen && this.drawer.scrollTop === 0 && e.touches[0].clientY > this.startY) {
-            e.preventDefault();
-          }
-        }, { passive: false });
 
         console.log('DreamBottomDrawer initialized');
       }
 
       handleTouchStart(e) {
-        // Only handle touch on the handle or when at top of scroll
-        if (e.target === this.handle || this.drawer.scrollTop === 0) {
+        // Only handle touch on the handle or when at top of scroll AND drawer is scrollable
+        if (e.target === this.handle) {
+          this.startDrag(e.touches[0].clientY);
+        } else if (this.drawer.scrollTop === 0 && e.touches[0].clientY > this.startY) {
+          // Only start drag when at top of scroll and dragging down
           this.startDrag(e.touches[0].clientY);
         }
       }
@@ -663,8 +659,12 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       handleTouchMove(e) {
         if (!this.isDragging) return;
         
-        // Prevent default only when dragging the drawer itself
-        if (this.drawer.scrollTop === 0) {
+        // Only prevent default when actually dragging the drawer
+        // Don't prevent when user is trying to scroll content
+        const isScrollingContent = this.drawer.scrollTop > 0 || 
+                            (this.drawer.scrollTop === 0 && this.currentY < this.startY);
+        
+        if (!isScrollingContent) {
           e.preventDefault();
         }
         
@@ -711,17 +711,13 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         // Calculate the new position based on current state
         let newTransformY;
         
-        if (this.currentState === 'closed') {
-          // Dragging from closed state (can only go up)
-          const closedPosition = 100 - (80 / screenHeight * 100); // Default closed position
-          newTransformY = Math.max(15, Math.min(closedPosition, closedPosition - (deltaY / screenHeight * 100)));
-        } else if (this.currentState === 'peek') {
+        if (this.currentState === 'peek') {
           // Dragging from peek state
           const peekPosition = 100 - (120 / screenHeight * 100); // Peek position
-          newTransformY = Math.max(15, Math.min(100 - (80 / screenHeight * 100), peekPosition + (deltaY / screenHeight * 100)));
+          newTransformY = Math.max(15, Math.min(peekPosition, peekPosition + (deltaY / screenHeight * 100)));
         } else { // expanded
           // Dragging from expanded state
-          newTransformY = Math.max(15, Math.min(100 - (80 / screenHeight * 100), 15 + (deltaY / screenHeight * 100)));
+          newTransformY = Math.max(15, Math.min(100 - (120 / screenHeight * 100), 15 + (deltaY / screenHeight * 100)));
         }
         
         this.drawer.style.transform = `translateY(${newTransformY}vh)`;
@@ -742,21 +738,13 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         
         // Determine final state based on drag distance and velocity
         if (velocity > 0.8) {
-          // Fast swipe
+          // Fast swipe - toggle state
           if (deltaY > 0) {
-            // Swiping down
-            if (this.currentState === 'expanded') {
-              this.setState('peek');
-            } else {
-              this.setState('closed');
-            }
+            // Swiping down - go to peek
+            this.setState('peek');
           } else {
-            // Swiping up
-            if (this.currentState === 'closed') {
-              this.setState('peek');
-            } else {
-              this.setState('expanded');
-            }
+            // Swiping up - go to expanded
+            this.setState('expanded');
           }
         } else {
           // Slow drag - use distance threshold
@@ -765,19 +753,11 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
           
           if (dragDistance > threshold) {
             if (deltaY > 0) {
-              // Dragging down
-              if (this.currentState === 'expanded') {
-                this.setState('peek');
-              } else {
-                this.setState('closed');
-              }
+              // Dragging down - go to peek
+              this.setState('peek');
             } else {
-              // Dragging up
-              if (this.currentState === 'closed') {
-                this.setState('peek');
-              } else {
-                this.setState('expanded');
-              }
+              // Dragging up - go to expanded
+              this.setState('expanded');
             }
           } else {
             // Return to current state
@@ -796,10 +776,6 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         this.drawer.style.transform = '';
         
         switch (state) {
-          case 'closed':
-            this.isOpen = false;
-            // Default closed state is handled by CSS
-            break;
           case 'peek':
             this.isOpen = true;
             this.drawer.classList.add('peek');
@@ -816,8 +792,6 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       toggleDrawer() {
         if (this.currentState === 'peek') {
           this.setState('expanded');
-        } else if (this.currentState === 'expanded') {
-          this.setState('closed');
         } else {
           this.setState('peek');
         }
@@ -838,8 +812,8 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         // Update similar dreams
         this.updateSimilarDreams(dreamData.id);
         
-        // Open drawer to peek state if closed
-        if (this.currentState === 'closed') {
+        // Always ensure we're at least at peek when showing content
+        if (this.currentState !== 'expanded') {
           this.setState('peek');
         }
       }
@@ -905,8 +879,8 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         if (this.noSelection) this.noSelection.style.display = 'block';
         if (this.dreamDisplay) this.dreamDisplay.style.display = 'none';
         
-        // Close drawer
-        this.setState('closed');
+        // Stay at peek state when hiding dream
+        this.setState('peek');
       }
 
       open() {
@@ -914,7 +888,8 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       }
 
       close() {
-        this.setState('closed');
+        // Since we removed closed state, close now means peek
+        this.setState('peek');
       }
     }
 

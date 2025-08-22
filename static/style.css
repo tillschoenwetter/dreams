@@ -1067,6 +1067,9 @@ footer {
     padding: 20px;
     overflow-y: auto;
     max-height: calc(70vh - 120px);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain; /* Prevent pull-to-refresh */
+    touch-action: pan-y; /* Allow vertical scrolling */
   }
 
   .no-selection {
@@ -1265,9 +1268,12 @@ footer {
   /* Sheet content */
   .sheet-content {
     padding: 20px;
+     padding-bottom: 200px; /*increased it from 20 to 60 for lower scrolling -till <3 */
     overflow-y: auto;
     max-height: calc(70vh - 120px);
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain; /* Prevent pull-to-refresh */
+    touch-action: pan-y; /* Allow vertical scrolling */
   }
   /* No selection state */
   .no-selection {
@@ -1318,6 +1324,12 @@ footer {
   /* Similar dreams section */
   .similar-dreams {
     margin-top: 20px;
+    margin-bottom: 40px; /* Add extra bottom margin */
+  }
+
+  /* Last similar item gets extra margin */
+  .similar-item:last-child {
+    margin-bottom: 20px;
   }
 
   .similar-dreams h4 {
@@ -1429,7 +1441,7 @@ footer {
   /* Safe area handling for devices with notches */
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
     .sheet-content {
-      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      padding-bottom: calc(60px + env(safe-area-inset-bottom));
     }
   }
 
