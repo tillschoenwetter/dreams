@@ -249,6 +249,7 @@ button {
   text-decoration: underline;
 }
 
+/* ———————————— constellation ——————————— */
 .constellation-container {
   position: relative;
   width: 100vw;
@@ -292,6 +293,114 @@ button {
   padding: 10px;
   color: #ddd;
 }
+/* Full-screen overlay for dream modal */
+#dreamModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8); /* 80% black opacity */
+  display: none; /* hidden by default */
+  z-index: 2000; /* above everything else */
+  pointer-events: all; /* accept clicks */
+  
+  /* Center the content */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The actual modal container */
+.dream-modal-container {
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  padding: 40px;
+  border-radius: 12px;
+  width: 25vw; /* 1/4 of screen width */
+  max-width: 600px;
+  min-width: 400px;
+  max-height: 70vh;
+  overflow-y: auto;
+  text-align: center;
+  box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  
+  /* Smooth animations */
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* When modal is shown */
+#dreamModal.show .dream-modal-container {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Dream ID heading */
+.dream-modal-container h2 {
+  font-family: 'Archivo', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 30px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Dream text */
+.dream-modal-text {
+  font-family: 'Inconsolata', monospace;
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: left;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Close instruction (subtle) */
+.dream-modal-close-hint {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Inconsolata', monospace;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  animation: fadeInDelay 2s ease-out 1s forwards;
+}
+
+@keyframes fadeInDelay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .dream-modal-container {
+    width: 30vw; /* Slightly larger on smaller screens */
+  }
+}
+
+@media (max-width: 900px) {
+  .dream-modal-container {
+    width: 40vw;
+    min-width: 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Hide on mobile - use bottom drawer instead */
+  #dreamModal {
+    display: none !important;
+  }
+}
+/* ↑ end on dream modal ↑ */ 
+
 /* ↓ Panel similar dreams ↓ */
 .similar-panel {
   position: absolute;
@@ -321,6 +430,8 @@ button {
   padding: 5px 10px;
   font-size: 13px;
 }
+/* ↑ end of similar dreams ↑ */
+
 /* Mobile Bottom Sheet - Hidden on Desktop */
 .bottom-sheet-container {
   display: none; /* Hidden by default */
@@ -1338,13 +1449,13 @@ footer {
     color: rgba(255, 255, 255, 0.8);
     font-family: 'Archivo', sans-serif;
   }
-
+  
   .similar-list {
     list-style: none;
     padding: 0;
     margin: 0;
   }
-
+  
   .similar-item {
     padding: 12px;
     background: rgba(255, 255, 255, 0.05);
@@ -1477,129 +1588,7 @@ footer {
     }
   }
 }
+
   
 
 
-/* ———————————————————————————————————— Telescope ———————————————————————————————————— */
-.circle-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 90vmin;
-  height: 90vmin;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  overflow: hidden;
-  background: black;
-  z-index: 1;
-}
-/* ─── center crosshair ─── */
-#centerCross {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 80px;          /* how big is the cross */
-  height: 80px;
-  transform: translate(-50%, -50%);
-  pointer-events: none; /* let clicks/drag go "through" */
-  z-index: 100;         /* above your constellation */
-}
-#centerCross::before,
-#centerCross::after {
-  content: "";
-  position: absolute;
-  background: #fff;     /* white cross; tweak as you like */
-}
-/* horizontal line */
-#centerCross::before {
-  top: 50%;
-  left: 0;
-  width: 100%;
-  height: 1px;          /* thickness */
-  transform: translateY(-50%);
-}
-
-/* vertical line */
-#centerCross::after {
-  left: 50%;
-  top: 0;
-  width: 1px;           /* thickness */
-  height: 100%;
-  transform: translateX(-50%);
-}
-/* ───── */
-
-#centerPreview {
-  position: absolute;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-
-  max-width: 70vw;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  font: 13px/1.4 "Helvetica Neue", Arial, sans-serif;
-  text-align: center;
-  width: 30%;
-  /* hidden by default */
-  display: none;
-  pointer-events: none;  /* so clicks pass through */
-}
-
-/* helper class you toggle from JS */
-/* #centerPreview.shown {
-  display: block;
-  animation: fadeIn 1s ease-out;
-} */
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translate(-50%, 10px); }
-  to   { opacity: 1; transform: translate(-50%, 0); }
-}
-
-/* .similar-panel-TS {
-  /* z-index: 10; 
-} */
-
- /*──────────────────────── HUD dream Preview ────────────────────────*/
-/* HUD che appare in basso al centro dello schermo */
-#centerPreview{
-  position: absolute;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,.70);
-  color: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 30vw;       /* ← era 70vw  (più stretta) */
-  text-align: center;
-  font: 13px/1.4 "Helvetica Neue", Arial, sans-serif;
-  pointer-events: none;
-  z-index: 1000;
-  display: none;
-}
-
-
-
- /*──────────────────────── Full dream modal ────────────────────────*/
-#dreamModal{
-  position: fixed;                 /* ↳ stays put on screen          */
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 50vw; max-height: 50vh;
-  padding: 20px;
-  overflow: auto;
-
-  background: rgba(0,0,0,0.85);
-  color: #fff;
-  font: 16px/1.45 "Helvetica Neue", Arial, sans-serif;
-  border-radius: 14px;
-  box-shadow: 0 0 40px rgba(0,0,0,.55);
-  display: none;                   /* hidden by default              */
-  z-index: 2000;                   /* above everything else          */
-  pointer-events: all;             /* accept clicks (for close btn)  */
-}

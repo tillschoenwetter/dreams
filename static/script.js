@@ -417,7 +417,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
   }
   updateSimilarPanel(newDreamId || null);
 
-  // --- SIMILARITY THRESHOLD DYNAMIC FILTERING ---
+  // ————————— SIMILARITY THRESHOLD DYNAMIC FILTERING ———————————————
   const thresholdSlider = document.getElementById("similarityRange");
   const thresholdDisplay = document.getElementById("thresholdValue");
 
@@ -448,7 +448,86 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       preload.style.display = "none";
     }, 500);
   }
-  // SEARCH FUNCTION
+  // ———————————— DREAM MODAL ——————————————————————
+  // Function to show the central dream modal
+  function showCentralDreamModal(dreamData) {
+    const modal = document.getElementById("dreamModal");
+    
+    // Clear any existing content
+    modal.innerHTML = '';
+    
+    // Create the modal structure
+    const modalContainer = document.createElement('div');
+    modalContainer.className = 'dream-modal-container';
+    
+    modalContainer.innerHTML = `
+      <h2>Dream ${dreamData.id}</h2>
+      <div class="dream-modal-text">${dreamData.text}</div>
+    `;
+    
+    modal.appendChild(modalContainer);
+    
+    // Add close hint
+    const closeHint = document.createElement('div');
+    closeHint.className = 'dream-modal-close-hint';
+    closeHint.textContent = 'Click anywhere to close';
+    modal.appendChild(closeHint);
+    
+    // Show modal with animation
+    modal.style.display = 'flex';
+    
+    // Trigger animation after a brief delay
+    setTimeout(() => {
+      modal.classList.add('show');
+    }, 10);
+    
+    // Close modal when clicking on overlay (not on the container)
+    modal.onclick = function(e) {
+      if (e.target === modal) {
+        hideCentralDreamModal();
+      }
+    };
+    
+    // Close modal with ESC key
+    document.addEventListener('keydown', handleEscapeKey);
+  }
+
+  // Function to hide the central dream modal
+  function hideCentralDreamModal() {
+    const modal = document.getElementById("dreamModal");
+    
+    // Remove animation class first
+    modal.classList.remove('show');
+    
+    // Hide modal after animation completes
+    setTimeout(() => {
+      modal.style.display = 'none';
+      modal.innerHTML = ''; // Clear content
+    }, 300); // Match the transition duration
+    
+    // Remove escape key listener
+    document.removeEventListener('keydown', handleEscapeKey);
+  }
+
+  // Handle ESC key to close modal
+  function handleEscapeKey(e) {
+    if (e.key === 'Escape') {
+      hideCentralDreamModal();
+    }
+  }
+
+  // Update the existing node click handler to use the new modal
+  // This would replace the existing showDreamModal calls in your script.js
+  function showDreamOnClick(dreamData) {
+    // Hide any existing modals first
+    hideCentralDreamModal();
+    
+    // Show the new central modal
+    showCentralDreamModal(dreamData);
+  }
+  // ———————————— end of dream modal ———————————————
+
+  // ———————————— SEARCH FUNCTION ——————————————————
   function updateSearchResults(matchCount, keywords) {
     let searchResultsDiv = document.getElementById("search-results");
     
@@ -602,7 +681,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       searchInput.focus();
     });
   }
-  // ******* MOBILE BOTTOM DRAWER ******
+  // ———————————————— MOBILE BOTTOM DRAWER —————————————
   // Only initialize bottom drawer on mobile devices
   const isMobile = window.innerWidth <= 768;
 

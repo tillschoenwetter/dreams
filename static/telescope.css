@@ -1,0 +1,196 @@
+/* ———————————————————————————————————————————————————————— Telescope ——————————————————————————————————————————————————————————————— */
+
+/* Constellation container */
+.constellation-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  cursor: default;
+}
+
+/* SVG constellation */
+svg {
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+}
+.node { cursor: pointer; }
+.link { stroke-opacity: 0.3; }
+.tooltip {
+  position: absolute;
+  text-align: left;
+  padding: 8px 12px;
+  font-family: 'Inconsolata', monospace;
+  font-size: 11px;
+  line-height: 1.3;
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  border-radius: 6px;
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  color: #ddd;
+  backdrop-filter: blur(10px);
+  max-width: 300px;
+  max-height: calc(1.3em * 3 + 16px); /* 3 lines of text + padding */
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.spinner-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 999; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  border: 8px solid #222;
+  border-top: 8px solid #fff;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Body loading state */
+body.loading {
+  cursor: progress;
+}
+.circle-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 90vmin;
+    height: 90vmin;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    overflow: hidden;
+    background: black;
+    z-index: 1;
+  }
+  /* ─── center crosshair ─── */
+  #centerCross {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;          /* how big is the cross */
+    height: 80px;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* let clicks/drag go "through" */
+    z-index: 100;         /* above your constellation */
+  }
+  #centerCross::before,
+  #centerCross::after {
+    content: "";
+    position: absolute;
+    background: #fff;     /* white cross; tweak as you like */
+  }
+  /* horizontal line */
+  #centerCross::before {
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;          /* thickness */
+    transform: translateY(-50%);
+  }
+  
+  /* vertical line */
+  #centerCross::after {
+    left: 50%;
+    top: 0;
+    width: 1px;           /* thickness */
+    height: 100%;
+    transform: translateX(-50%);
+  }
+  /* ───── */
+  
+  #centerPreview {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+  
+    max-width: 70vw;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    font: 13px/1.4 "Helvetica Neue", Arial, sans-serif;
+    text-align: center;
+    width: 30%;
+    /* hidden by default */
+    display: none;
+    pointer-events: none;  /* so clicks pass through */
+  }
+  
+  /* helper class you toggle from JS */
+  /* #centerPreview.shown {
+    display: block;
+    animation: fadeIn 1s ease-out;
+  } */
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, 10px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+  
+  /* .similar-panel-TS {
+    /* z-index: 10; 
+  } */
+  
+   /*──────────────────────── HUD dream Preview ────────────────────────*/
+  /* HUD che appare in basso al centro dello schermo */
+  #centerPreview{
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,.70);
+    color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 30vw;       /* ← era 70vw  (più stretta) */
+    text-align: center;
+    font: 13px/1.4 "Helvetica Neue", Arial, sans-serif;
+    pointer-events: none;
+    z-index: 1000;
+    display: none;
+  }
+  
+  
+  
+   /*──────────────────────── Full dream modal ────────────────────────*/
+  #dreamModal{
+    position: fixed;                 /* ↳ stays put on screen          */
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 50vw; max-height: 50vh;
+    padding: 20px;
+    overflow: auto;
+  
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    font: 16px/1.45 "Helvetica Neue", Arial, sans-serif;
+    border-radius: 14px;
+    box-shadow: 0 0 40px rgba(0,0,0,.55);
+    display: none;                   /* hidden by default              */
+    z-index: 2000;                   /* above everything else          */
+    pointer-events: all;             /* accept clicks (for close btn)  */
+  }
