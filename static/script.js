@@ -383,9 +383,12 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     })
     .on("mouseover", function(d) {
       // Show tooltips and size changes on ALL devices
+      // Truncate text to first ~100 characters or first two lines
+      const truncatedText = d.text.length > 100 ? d.text.substring(0, 100) + "..." : d.text;
+      
       d3.select("#tooltip")
         .style("display", "block")
-        .html(`<strong>Dream ${d.id}:</strong><br>${d.text}`);
+        .html(`<strong>Dream ${d.id}:</strong><br>${truncatedText}`);
       
       d3.select(this).transition().duration(200)
         .attr("r", sizeScale(d.score) + 2);

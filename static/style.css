@@ -350,8 +350,6 @@ button {
   font-weight: 600;
   color: #fff;
   margin: 0 0 30px 0;
-  text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 /* Dream text */
@@ -432,7 +430,7 @@ button {
   max-height: 500px;
   overflow-y: auto;
   padding: 5px 10px;
-  font-size: 13px;
+  font-size: 14px;
 }
 /* ↑ end of similar dreams ↑ */
 
