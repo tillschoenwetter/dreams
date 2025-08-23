@@ -1381,12 +1381,15 @@ footer {
   /* Sheet content */
   .sheet-content {
     padding: 20px;
-     padding-bottom: 200px; /*increased it from 20 to 60 for lower scrolling -till <3 */
+    padding-bottom: 60px;
     overflow-y: auto;
     max-height: calc(70vh - 120px);
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain; /* Prevent pull-to-refresh */
     touch-action: pan-y; /* Allow vertical scrolling */
+    overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
   /* No selection state */
   .no-selection {
