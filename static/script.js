@@ -437,7 +437,28 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
   const thresholdSlider = document.getElementById("similarityRange");
   const thresholdDisplay = document.getElementById("thresholdValue");
 
-  if (thresholdSlider && thresholdDisplay) {
+  // Set different default thresholds for mobile vs desktop
+  const defaultThreshold = isMobile ? 0.1 : 0.6; // Much lower threshold for mobile
+  const defaultOpacity = isMobile ? 0.4 : 0.6;   // Slightly lower opacity for mobile
+
+  // Apply initial mobile-friendly settings
+  if (isMobile) {
+    // Set all links to be more visible on mobile with lower threshold
+    d3.selectAll(".link")
+      .style("stroke-opacity", defaultOpacity)
+      .style("stroke-width", function(d) {
+        // Show links with very low similarity on mobile
+        if (d.similarity >= 0.1) {
+          const width = getStrokeWidth(d.similarity);
+          return (d.source === newDreamId || d.target === newDreamId) ? 
+            width * 2 : width;
+        }
+        return 0; // Hide only extremely low similarity links
+      });
+  }
+
+  // Desktop-only slider controls
+  if (!isMobile && thresholdSlider && thresholdDisplay) {
     thresholdSlider.addEventListener("input", function () {
       const visibility = parseFloat(this.value);
       thresholdDisplay.textContent = visibility.toFixed(2);
