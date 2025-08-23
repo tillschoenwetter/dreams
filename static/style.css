@@ -305,10 +305,14 @@ button {
   z-index: 2000; /* above everything else */
   pointer-events: all; /* accept clicks */
   
-  /* Center the content */
-  display: flex;
+  /* Center the content when shown */
   align-items: center;
   justify-content: center;
+}
+
+/* When modal is shown */
+#dreamModal.show {
+  display: flex;
 }
 
 /* The actual modal container */

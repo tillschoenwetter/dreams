@@ -177,7 +177,7 @@ body.loading {
   
   
    /*──────────────────────── Full dream modal ────────────────────────*/
-  #dreamModal{
+  #telescope-dreamModal{
     position: fixed;                 /* ↳ stays put on screen          */
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);

@@ -375,6 +375,9 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       d3.select(this).classed('selected', true);
       updateLinkColors(d.id);
 
+      // Show the dream modal
+      showCentralDreamModal(d);
+
       console.log("Selection applied");
 
     })
