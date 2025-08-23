@@ -441,11 +441,14 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
   const defaultThreshold = isMobile ? 0.1 : 0.6; // Much lower threshold for mobile
   const defaultOpacity = isMobile ? 0.4 : 0.6;   // Slightly lower opacity for mobile
 
-  // Apply initial mobile-friendly settings
+  // Apply initial mobile-friendly settings to existing links
   if (isMobile) {
     // Set all links to be more visible on mobile with lower threshold
     d3.selectAll(".link")
-      .style("stroke-opacity", defaultOpacity)
+      .style("stroke-opacity", function(d) {
+        // Show links with very low similarity on mobile
+        return d.similarity >= 0.1 ? defaultOpacity : 0;
+      })
       .style("stroke-width", function(d) {
         // Show links with very low similarity on mobile
         if (d.similarity >= 0.1) {
@@ -732,6 +735,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
   const isMobileWidth = window.innerWidth <= 768;
 
   if (isMobileWidth) {
+    // Update the DreamBottomDrawer class with these improvements
     class DreamBottomDrawer {
       constructor() {
         this.drawer = document.getElementById('bottomSheet');
@@ -748,85 +752,90 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         this.similarList = document.getElementById('similarList');
         
         this.isOpen = true;
-        this.currentState = 'peek'; // Only 'peek' or 'expanded' now
+        this.currentState = 'peek';
         this.selectedDreamId = null;
         
-        // Touch tracking
+        // Improved touch tracking
         this.startY = 0;
         this.currentY = 0;
+        this.lastY = 0;
         this.isDragging = false;
         this.startTime = 0;
+        this.velocity = 0;
+        this.lastTimestamp = 0;
         
-        // Only initialize if all elements exist
+        // Get screen dimensions
+        this.screenHeight = window.innerHeight;
+        this.peekHeight = 120;
+        this.expandedOffset = this.screenHeight * 0.15; // 15vh
+        
         if (this.drawer && this.container && this.handle) {
           this.init();
         }
       }
 
       init() {
-        // Touch events for mobile
-        this.setState('peek'); // initially at peek
+        this.setState('peek');
+        
+        // Improved touch event handling
         this.handle.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
         this.drawer.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
         this.drawer.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
         this.drawer.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: false });
+        this.drawer.addEventListener('touchcancel', this.handleTouchEnd.bind(this), { passive: false });
         
         // Mouse events for desktop testing
         this.handle.addEventListener('mousedown', this.handleMouseStart.bind(this));
         this.drawer.addEventListener('mousedown', this.handleMouseStart.bind(this));
         document.addEventListener('mousemove', this.handleMouseMove.bind(this));
         document.addEventListener('mouseup', this.handleMouseEnd.bind(this));
-
+        
         // Handle clicks on the handle
         this.handle.addEventListener('click', this.toggleDrawer.bind(this));
         
-        // Close drawer when clicking outside (on constellation)
-        const constellation = document.getElementById('constellation');
-        if (constellation) {
-          constellation.addEventListener('click', (e) => {
-            // Only close if clicking on the background, not on nodes
-            if (e.target === constellation) {
-              this.setState('peek'); // Changed from 'closed' to 'peek'
-            }
-          });
-        }
-
+        // Update screen height on orientation change
+        window.addEventListener('resize', () => {
+          this.screenHeight = window.innerHeight;
+          this.expandedOffset = this.screenHeight * 0.15;
+        });
+        
         console.log('DreamBottomDrawer initialized');
       }
 
       handleTouchStart(e) {
-        // Only handle touch on the handle or when at top of scroll AND drawer is scrollable
-        if (e.target === this.handle) {
-          this.startDrag(e.touches[0].clientY);
-        } else if (this.drawer.scrollTop === 0 && e.touches[0].clientY > this.startY) {
-          // Only start drag when at top of scroll and dragging down
-          this.startDrag(e.touches[0].clientY);
+        const touch = e.touches[0];
+        const isOnHandle = e.target === this.handle || e.target.closest('#sheetHandle');
+        const isScrollAtTop = this.content.scrollTop === 0;
+        const isScrollableContent = e.target.closest('.similar-list') || e.target.closest('.sheet-content');
+        
+        // Only start drag if:
+        // 1. Touching the handle, OR
+        // 2. Content is scrolled to top AND we're NOT touching scrollable content
+        if ((isOnHandle || isScrollAtTop) && !isScrollableContent) {
+          this.startDrag(touch.clientY);
+          e.preventDefault(); // Only prevent scrolling when actually starting drag
         }
+        // If touching scrollable content and not at top, allow normal scrolling
       }
 
       handleTouchMove(e) {
-        if (!this.isDragging) return;
-        
-        // Only prevent default when actually dragging the drawer
-        // Don't prevent when user is trying to scroll content
-        const isScrollingContent = this.drawer.scrollTop > 0 || 
-                            (this.drawer.scrollTop === 0 && this.currentY < this.startY);
-        
-        if (!isScrollingContent) {
-          e.preventDefault();
-        }
-        
-        this.updateDrag(e.touches[0].clientY);
-      }
+  if (!this.isDragging) return;
+  
+  const touch = e.touches[0];
+  
+  // Always allow dragging if we started it (don't check for scrollable content during move)
+  e.preventDefault();
+  this.updateDrag(touch.clientY);
+}
 
       handleTouchEnd(e) {
         this.endDrag();
       }
 
       handleMouseStart(e) {
-        // Only handle mouse on the handle
         if (e.target === this.handle || e.target.closest('#sheetHandle')) {
           this.startDrag(e.clientY);
+          e.preventDefault();
         }
       }
 
@@ -843,31 +852,54 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         this.isDragging = true;
         this.startY = clientY;
         this.currentY = clientY;
+        this.lastY = clientY;
         this.startTime = Date.now();
+        this.lastTimestamp = Date.now();
+        this.velocity = 0;
         
-        // Remove transition during drag
+        // Remove transition during drag for immediate response
         this.drawer.style.transition = 'none';
+        
+        // Add dragging class for potential styling
+        this.drawer.classList.add('dragging');
       }
 
       updateDrag(clientY) {
         if (!this.isDragging) return;
         
-        this.currentY = clientY;
-        const deltaY = clientY - this.startY;
-        const screenHeight = window.innerHeight;
+        const now = Date.now();
+        const timeDelta = now - this.lastTimestamp;
         
-        // Calculate the new position based on current state
+        if (timeDelta > 0) {
+          // Calculate velocity for momentum
+          const yDelta = clientY - this.lastY;
+          this.velocity = yDelta / timeDelta; // pixels per ms
+        }
+        
+        this.lastY = this.currentY;
+        this.currentY = clientY;
+        this.lastTimestamp = now;
+        
+        const deltaY = clientY - this.startY;
+        
+        // Calculate new position based on current state
         let newTransformY;
         
         if (this.currentState === 'peek') {
           // Dragging from peek state
-          const peekPosition = 100 - (120 / screenHeight * 100); // Peek position
-          newTransformY = Math.max(15, Math.min(peekPosition, peekPosition + (deltaY / screenHeight * 100)));
+          const peekPosition = ((this.screenHeight - this.peekHeight) / this.screenHeight) * 100;
+          const dragPercent = (deltaY / this.screenHeight) * 100;
+          newTransformY = Math.max(this.expandedOffset / this.screenHeight * 100, 
+                              Math.min(100, peekPosition + dragPercent));
         } else { // expanded
           // Dragging from expanded state
-          newTransformY = Math.max(15, Math.min(100 - (120 / screenHeight * 100), 15 + (deltaY / screenHeight * 100)));
+          const expandedPosition = (this.expandedOffset / this.screenHeight) * 100;
+          const dragPercent = (deltaY / this.screenHeight) * 100;
+          newTransformY = Math.max(this.expandedOffset / this.screenHeight * 100, 
+                              Math.min(100, expandedPosition + dragPercent));
         }
         
+        // Apply transform immediately
         this.drawer.style.transform = `translateY(${newTransformY}vh)`;
       }
 
@@ -876,49 +908,52 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         
         this.isDragging = false;
         
+        // Remove dragging class
+        this.drawer.classList.remove('dragging');
+        
         // Restore transition
         this.drawer.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
         
-        // Calculate velocity
+        // Calculate final state based on velocity and position
         const deltaY = this.currentY - this.startY;
         const deltaTime = Date.now() - this.startTime;
-        const velocity = Math.abs(deltaY) / deltaTime; // pixels per ms
+        const avgVelocity = Math.abs(deltaY) / Math.max(deltaTime, 1);
         
-        // Determine final state based on drag distance and velocity
-        if (velocity > 0.8) {
-          // Fast swipe - toggle state
+        // High velocity threshold for quick swipes
+        const highVelocityThreshold = 0.8; // pixels per ms
+        
+        // Distance threshold (percentage of screen height)
+        const distanceThreshold = this.screenHeight * 0.15; // 15% of screen
+        
+        let targetState = this.currentState;
+        
+        if (avgVelocity > highVelocityThreshold) {
+          // Fast swipe - use velocity direction
           if (deltaY > 0) {
-            // Swiping down - go to peek
-            this.setState('peek');
+            targetState = 'peek'; // Swiping down
           } else {
-            // Swiping up - go to expanded
-            this.setState('expanded');
+            targetState = 'expanded'; // Swiping up
           }
         } else {
           // Slow drag - use distance threshold
-          const dragDistance = Math.abs(deltaY);
-          const threshold = window.innerHeight * 0.15; // 15% of screen height
-          
-          if (dragDistance > threshold) {
+          if (Math.abs(deltaY) > distanceThreshold) {
             if (deltaY > 0) {
-              // Dragging down - go to peek
-              this.setState('peek');
+              targetState = 'peek'; // Dragging down
             } else {
-              // Dragging up - go to expanded
-              this.setState('expanded');
+              targetState = 'expanded'; // Dragging up
             }
-          } else {
-            // Return to current state
-            this.setState(this.currentState);
           }
+          // else stay in current state
         }
+        
+        this.setState(targetState);
       }
 
       setState(state) {
         this.currentState = state;
         
         // Remove all state classes
-        this.drawer.classList.remove('peek', 'expanded');
+        this.drawer.classList.remove('peek', 'expanded', 'dragging');
         
         // Clear any inline transform
         this.drawer.style.transform = '';
