@@ -12,7 +12,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')  # Larger, better at paraphrasing
-DEFAULT_THRESHOLD = 0.6
+DEFAULT_THRESHOLD = 0.5
 
 def preprocess_dream(text):
     return text.strip()
