@@ -438,45 +438,48 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
   const thresholdDisplay = document.getElementById("thresholdValue");
 
   // Set different default thresholds for mobile vs desktop
-  const defaultThreshold = isMobile ? 0.1 : 0.6; // Much lower threshold for mobile
-  const defaultOpacity = isMobile ? 0.4 : 0.6;   // Slightly lower opacity for mobile
+  const defaultThreshold = isMobile ? 0.1 : 0.6;
+  const defaultOpacity = isMobile ? 0.4 : 0.6;
 
-  // Apply initial mobile-friendly settings to existing links
-  if (isMobile) {
-    // Set all links to be more visible on mobile with lower threshold
-    d3.selectAll(".link")
-      .style("stroke-opacity", function(d) {
-        // Show links with very low similarity on mobile
-        return d.similarity >= 0.1 ? defaultOpacity : 0;
-      })
-      .style("stroke-width", function(d) {
-        // Show links with very low similarity on mobile
-        if (d.similarity >= 0.1) {
-          const width = getStrokeWidth(d.similarity);
-          return (d.source === newDreamId || d.target === newDreamId) ? 
-            width * 2 : width;
-        }
-        return 0; // Hide only extremely low similarity links
-      });
+  // Initialize slider with appropriate default value
+  if (thresholdSlider && thresholdDisplay) {
+    thresholdSlider.value = defaultThreshold;
+    thresholdDisplay.textContent = defaultThreshold.toFixed(2);
   }
 
-  // Desktop-only slider controls
-  if (!isMobile && thresholdSlider && thresholdDisplay) {
-    thresholdSlider.addEventListener("input", function () {
-      const visibility = parseFloat(this.value);
-      thresholdDisplay.textContent = visibility.toFixed(2);
+  // Apply initial settings to existing links
+  d3.selectAll(".link")
+    .style("stroke-opacity", function(d) {
+      return d.similarity >= defaultThreshold ? defaultOpacity : 0;
+    })
+    .style("stroke-width", function(d) {
+      if (d.similarity >= defaultThreshold) {
+        const width = getStrokeWidth(d.similarity);
+        return (d.source === newDreamId || d.target === newDreamId) ? 
+          width * 2 : width;
+      }
+      return 0;
+    });
 
-      // Update all links with new visibility and width
+  // Enable slider for BOTH mobile and desktop
+  if (thresholdSlider && thresholdDisplay) {
+    thresholdSlider.addEventListener("input", function () {
+      const threshold = parseFloat(this.value);
+      thresholdDisplay.textContent = threshold.toFixed(2);
+
+      // Update all links based on threshold
       d3.selectAll(".link")
-        .style("stroke-opacity", d => {
-          // Full opacity at visibility 1, fade to 0 at visibility 0
-          return Math.min(0.6, visibility * 0.6);
+        .style("stroke-opacity", function(d) {
+          return d.similarity >= threshold ? 
+            (isMobile ? 0.4 : 0.6) : 0;
         })
         .style("stroke-width", function(d) {
-          // Scale width based on visibility value
-          const width = getStrokeWidth(d.similarity) * visibility;
-          return (d.source === newDreamId || d.target === newDreamId) ? 
-            width * 2 : width;
+          if (d.similarity >= threshold) {
+            const width = getStrokeWidth(d.similarity);
+            return (d.source === newDreamId || d.target === newDreamId) ? 
+              width * 2 : width;
+          }
+          return 0;
         });
     });
   }
