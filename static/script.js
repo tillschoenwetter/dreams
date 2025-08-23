@@ -5,6 +5,9 @@ console.log("links exists:", typeof links !== 'undefined');
 console.log("#constellation element:", document.getElementById("constellation"));
 console.log("D3 loaded:", typeof d3 !== 'undefined');
 
+// Check if device is mobile
+const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 // Replace the existing pageshow event listener with this updated version
 window.addEventListener('pageshow', function(event) {
   const spinner = document.getElementById("preloadSpinner");
@@ -94,47 +97,49 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
   const MOVE_SPEED = 30;  // Adjust this value to control movement speed
   const ZOOM_SPEED = 0.1; // Adjust this value to control zoom speed
 
-  // Add keyboard controls
-  document.addEventListener('keydown', function(event) {
-      // Get current transform values
-      currentTransform = d3.zoomTransform(svg.node());
-      let tx = currentTransform.x;
-      let ty = currentTransform.y;
-      let k = currentTransform.k;
+  // Add keyboard controls (Desktop only)
+  if (!isMobile) {
+    document.addEventListener('keydown', function(event) {
+        // Get current transform values
+        currentTransform = d3.zoomTransform(svg.node());
+        let tx = currentTransform.x;
+        let ty = currentTransform.y;
+        let k = currentTransform.k;
 
-      switch(event.key) {
-          case 'ArrowLeft':
-              tx += MOVE_SPEED;
-              break;
-          case 'ArrowRight':
-              tx -= MOVE_SPEED;
-              break;
-          case 'ArrowUp':
-              ty += MOVE_SPEED;
-              break;
-          case 'ArrowDown':
-              ty -= MOVE_SPEED;
-              break;
-          // Add zoom controls with + and - keys
-          case '+':
-          case '=':  // Common binding for + without shift
-              k *= (1 + ZOOM_SPEED);
-              break;
-          case '-':
-          case '_':  // Common binding for - without shift
-              k *= (1 - ZOOM_SPEED);
-              break;
-      }
+        switch(event.key) {
+            case 'ArrowLeft':
+                tx += MOVE_SPEED;
+                break;
+            case 'ArrowRight':
+                tx -= MOVE_SPEED;
+                break;
+            case 'ArrowUp':
+                ty += MOVE_SPEED;
+                break;
+            case 'ArrowDown':
+                ty -= MOVE_SPEED;
+                break;
+            // Add zoom controls with + and - keys
+            case '+':
+            case '=':  // Common binding for + without shift
+                k *= (1 + ZOOM_SPEED);
+                break;
+            case '-':
+            case '_':  // Common binding for - without shift
+                k *= (1 - ZOOM_SPEED);
+                break;
+        }
 
-      // Apply the new transform
-      const newTransform = d3.zoomIdentity
-          .translate(tx, ty)
-          .scale(k);
-      
-      svg.transition()
-          .duration(100)
-          .call(zoom.transform, newTransform);
-  });
+        // Apply the new transform
+        const newTransform = d3.zoomIdentity
+            .translate(tx, ty)
+            .scale(k);
+        
+        svg.transition()
+            .duration(100)
+            .call(zoom.transform, newTransform);
+    });
+  }
 
   // Add gamepad support
   function setupGamepad() {
@@ -188,7 +193,9 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
   }
 
   // Initialize gamepad support
-  setupGamepad();
+  if (!isMobile) {
+    setupGamepad();
+  }
 
   const xScale = d3.scaleLinear().domain([0, 30]).range([0, width]);
   const yScale = d3.scaleLinear().domain([0, 30]).range([0, height]);
@@ -350,7 +357,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     .range([0.1, 3]);
 
   // Create nodes - universal version that works everywhere
-  container.append("g")
+  const nodeSelection = container.append("g")
     .attr("class", "nodes")
     .selectAll("circle")
     .data(nodes)
@@ -379,31 +386,34 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       showCentralDreamModal(d);
 
       console.log("Selection applied");
-
-    })
-    .on("mouseover", function(d) {
-      // Show tooltips and size changes on ALL devices
-      // Truncate text to first ~100 characters or first two lines
-      const truncatedText = d.text.length > 100 ? d.text.substring(0, 100) + "..." : d.text;
-      
-      d3.select("#tooltip")
-        .style("display", "block")
-        .html(`<strong>Dream ${d.id}:</strong><br>${truncatedText}`);
-      
-      d3.select(this).transition().duration(200)
-        .attr("r", sizeScale(d.score) + 2);
-    })
-    .on("mousemove", function(d) {
-      d3.select("#tooltip")
-        .style("left", (d3.event.pageX + 10) + "px")
-        .style("top", (d3.event.pageY + 10) + "px");
-    })
-    .on("mouseout", function(d) {
-      d3.select("#tooltip").style("display", "none");
-      
-      d3.select(this).transition().duration(200)
-        .attr("r", sizeScale(d.score));
     });
+
+  // Only add hover events on desktop
+  if (!isMobile) {
+    nodeSelection
+      .on("mouseover", function(d) {
+        // Show tooltips and size changes on desktop only
+        const truncatedText = d.text.length > 100 ? d.text.substring(0, 100) + "..." : d.text;
+        
+        d3.select("#tooltip")
+          .style("display", "block")
+          .html(`<strong>Dream ${d.id}:</strong><br>${truncatedText}`);
+        
+        d3.select(this).transition().duration(200)
+          .attr("r", sizeScale(d.score) + 2);
+      })
+      .on("mousemove", function(d) {
+        d3.select("#tooltip")
+          .style("left", (d3.event.pageX + 10) + "px")
+          .style("top", (d3.event.pageY + 10) + "px");
+      })
+      .on("mouseout", function(d) {
+        d3.select("#tooltip").style("display", "none");
+        
+        d3.select(this).transition().duration(200)
+          .attr("r", sizeScale(d.score));
+      });
+  }
 
   link
     .attr("x1", d => xScale(nodes.find(n => n.id === d.source).x))
@@ -534,6 +544,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
   // ———————————— end of dream modal ———————————————
 
   // ———————————— SEARCH FUNCTION ——————————————————
+  // Search results display (Desktop only)
   function updateSearchResults(matchCount, keywords) {
     let searchResultsDiv = document.getElementById("search-results");
     
@@ -611,11 +622,13 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
       // Clear previous timeout
       clearTimeout(searchTimeout);
       
-      // Show loading indicator
-      const searchResultsDiv = document.getElementById("search-results");
-      if (searchResultsDiv) {
-        searchResultsDiv.innerHTML = '<div style="text-align: center; color: #999; font-style: italic; padding: 20px;">Searching...</div>';
-        searchResultsDiv.style.display = "block";
+      // Show loading indicator (Desktop only)
+      if (!isMobile) {
+        const searchResultsDiv = document.getElementById("search-results");
+        if (searchResultsDiv) {
+          searchResultsDiv.innerHTML = '<div style="text-align: center; color: #999; font-style: italic; padding: 20px;">Searching...</div>';
+          searchResultsDiv.style.display = "block";
+        }
       }
       
       // Set a new timeout for search (300ms delay)
@@ -652,9 +665,11 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
             .classed("search-match", true)
             .attr("fill", "#ff6b6b") // Highlight color for search matches
             .attr("r", d => sizeScale(d.score) + 3); // Make matching nodes slightly larger
-          
-          // Update search results display
-          updateSearchResults(matches.length, keywords);
+        
+          // Update search results display (Desktop only)
+          if (!isMobile) {
+            updateSearchResults(matches.length, keywords);
+          }
           
           // If we have matches, center on the first one
           if (matches.length > 0) {
@@ -662,8 +677,10 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
             updateSimilarPanel(matches[0].id);
           }
         } else {
-          // Clear search results display when search is empty
-          clearSearchResults();
+          // Clear search results display when search is empty (Desktop only)
+          if (!isMobile) {
+            clearSearchResults();
+          }
         }
       }, 300); // 300ms delay
     });
@@ -680,8 +697,10 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         .attr("fill", d => d.id === newDreamId ? "orange" : "#fff")
         .attr("r", d => sizeScale(d.score));
       
-      // Clear search results display
-      clearSearchResults();
+      // Clear search results display (Desktop only)
+      if (!isMobile) {
+        clearSearchResults();
+      }
       
       // Focus back to search input
       searchInput.focus();
@@ -689,9 +708,9 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
   }
   // ———————————————— MOBILE BOTTOM DRAWER —————————————
   // Only initialize bottom drawer on mobile devices
-  const isMobile = window.innerWidth <= 768;
+  const isMobileWidth = window.innerWidth <= 768;
 
-  if (isMobile) {
+  if (isMobileWidth) {
     class DreamBottomDrawer {
       constructor() {
         this.drawer = document.getElementById('bottomSheet');
