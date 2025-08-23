@@ -39,6 +39,8 @@ html, body {
   width: 100%;
   height: 100%;
   font-family: 'Archivo', regular;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
 }
 
 * {
@@ -805,6 +807,7 @@ svg {
   width: 100vw;
   height: 100vh;
   background: #000;
+  overscroll-behavior: contain;
 }
 .node { cursor: pointer; }
 .link { stroke-opacity: 0.3; }
@@ -1125,9 +1128,15 @@ footer {
     transform: translateY(calc(100% - 200px)); /* Peek by default */
     transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     pointer-events: auto;
-    max-height: 80vh;
+    max-height: 85vh;
     min-height: 80px;
     border-top: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+    will-change: transform;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   /* Sheet states */
@@ -1316,26 +1325,6 @@ footer {
     z-index: 30;
   }
 
-  /* Bottom sheet main container */
-  .bottom-sheet {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 16px 16px 0 0;
-    transform: translateY(calc(100% - 80px)); /* Collapsed by default */
-    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    pointer-events: auto;
-    max-height: 85vh;
-    min-height: 80px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
-    will-change: transform;
-    touch-action: pan-y;
-  }
-
   /* Sheet states */
   .bottom-sheet.peek {
     transform: translateY(calc(100% - 120px));
@@ -1385,7 +1374,8 @@ footer {
     overflow-y: auto;
     max-height: calc(70vh - 120px);
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain; /* Prevent pull-to-refresh */
+    overscroll-behavior: contain; /* Keep this specific one */
+    overscroll-behavior-y: contain; /* Prevent pull-to-refresh */
     touch-action: pan-y; /* Allow vertical scrolling */
     overflow-scrolling: touch;
     -webkit-overflow-scrolling: touch;
@@ -1546,20 +1536,14 @@ footer {
     user-select: text;
   }
 
-  /* Performance optimizations */
-  .bottom-sheet {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-
   /* Safe area handling for devices with notches */
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
     .sheet-content {
       padding-bottom: calc(60px + env(safe-area-inset-bottom));
     }
   }
+
+  
 
   /* Responsive adjustments for smaller screens */
   @media (max-height: 600px) {
@@ -1593,7 +1577,4 @@ footer {
     }
   }
 }
-
-  
-
 
