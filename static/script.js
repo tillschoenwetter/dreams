@@ -438,8 +438,8 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
   const thresholdDisplay = document.getElementById("thresholdValue");
 
   // Set different default thresholds for mobile vs desktop
-  const defaultThreshold = isMobile ? 0.1 : 0.6;
-  const defaultOpacity = isMobile ? 0.4 : 0.6;
+  const defaultThreshold = isMobile ? 0.6 : 0.6;
+  const defaultOpacity = isMobile ? 0.6 : 0.6;
 
   // Initialize slider with appropriate default value
   if (thresholdSlider && thresholdDisplay) {
