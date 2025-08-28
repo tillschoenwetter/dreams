@@ -21,6 +21,7 @@ packaging==25.0
 pillow==11.2.1
 pynndescent==0.5.13
 PyYAML==6.0.2
+qrcode[pil]==7.4.2
 regex==2024.11.6
 requests==2.32.3
 safetensors==0.5.3

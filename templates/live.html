@@ -197,16 +197,47 @@
       overflow: hidden;
     }
 
-    .section-header {
-      font-family: 'Archivo', sans-serif;
-      font-size: 20px;
-      color: #fff;
-      margin: 0 0 20px 0;
-      text-align: center;
+    /* Analysis header container to hold title and QR code */
+    .analysis-header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
     }
 
     .analysis-header {
       color: #ff6b6b;
+      margin: 0; /* Remove default margin since it's in a flex container */
+    }
+
+    .qr-code-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    #qrCodeImg {
+      width: 60px;
+      height: 60px;
+      opacity: 0.8;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 4px;
+    }
+
+    #qrCodeImg:hover {
+      opacity: 1;
+      transform: scale(1.1);
+      cursor: pointer;
+    }
+
+    .qr-code-label {
+      font-family: 'Inconsolata', monospace;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.6);
+      text-align: center;
     }
 
     /* Similar Dreams List */
@@ -404,6 +435,18 @@
         font-size: 14px;
       }
     }
+
+    /* Very small screens - hide QR code to save space */
+    @media (max-width: 480px) {
+      .qr-code-container {
+        display: none;
+      }
+      
+      .analysis-header-container {
+        flex-direction: row;
+        justify-content: center;
+      }
+    }
   </style>
 </head>
 <body>
@@ -461,7 +504,13 @@
 
       <!-- Right Half - AI Analysis -->
       <div class="analysis-section">
-        <h3 class="section-header analysis-header">Collective Analysis</h3>
+        <div class="analysis-header-container">
+          <h3 class="section-header analysis-header">Collective Analysis</h3>
+          <div class="qr-code-container" id="qrCodeContainer">
+            <img id="qrCodeImg" src="" alt="QR Code to dreamatlas.cloud" style="display: none;">
+            <div class="qr-code-label">dreamatlas.cloud</div>
+          </div>
+        </div>
         <div class="analysis-content" id="analysisContent">
           <div class="loading-state">
             <div class="spinner"></div>
@@ -739,7 +788,28 @@
       }
     }
 
-    // Initialize
+    // Add this to the existing JavaScript section
+    async function loadQRCode() {
+      try {
+        const response = await fetch('/api/qr_code');
+        const data = await response.json();
+        
+        if (data.qr_code) {
+          const qrImg = document.getElementById('qrCodeImg');
+          qrImg.src = data.qr_code;
+          qrImg.style.display = 'block';
+          
+          // Add click handler to open website
+          qrImg.addEventListener('click', () => {
+            window.open('https://dreamatlas.cloud', '_blank');
+          });
+        }
+      } catch (error) {
+        console.error('Error loading QR code:', error);
+      }
+    }
+
+    // Update the init() function to include QR code loading
     async function init() {
       updateStatus(false, 'Loading...');
       initConstellation();
@@ -750,6 +820,7 @@
         currentDreamCount = data.count;
         
         await loadConstellationData();
+        await loadQRCode(); // Add this line
         
         if (currentDreamCount > 0) {
           await loadLatestDream();

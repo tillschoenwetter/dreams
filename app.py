@@ -8,6 +8,9 @@ import os
 import json
 from datetime import datetime
 import openai  # Add this import
+import qrcode
+import io
+import base64
 
 # DEBUG REMINDER, IF NOTHING WORKS CHECK THE END OF THE SCRIPT
 
@@ -496,6 +499,37 @@ def live_constellation():
         "nodes": nodes,
         "links": links
     })
+
+@app.route("/api/qr_code")
+def generate_qr_code():
+    """Generate QR code for dreamatlas.cloud"""
+    try:
+        # Create QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data("https://dreamatlas.cloud")
+        qr.make(fit=True)
+        
+        # Create QR code image
+        img = qr.make_image(fill_color="white", back_color="transparent")
+        
+        # Convert to base64 for web display
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+        
+        return jsonify({
+            "qr_code": f"data:image/png;base64,{img_str}"
+        })
+        
+    except Exception as e:
+        print(f"Error generating QR code: {e}")
+        return jsonify({"error": "QR code generation failed"})
 
 if __name__ == '__main__':
     # app.run(debug=True) # run this for the usual 127.0.0.1:5000
