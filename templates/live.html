@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Dreams – DreamAtlas</title>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='imgs/favicon.svg') }}">
+  <style>
+    .live-layout {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Top 60% - Constellation */
+    .constellation-section {
+      height: 60vh;
+      position: relative;
+      background: #000;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .constellation-section svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Bottom 40% - Split content */
+    .content-section {
+      height: 40vh;
+      display: flex;
+      background: rgba(0, 0, 0, 0.95);
+    }
+
+    /* Live Status Header */
+    .live-header {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      text-align: center;
+    }
+
+    .live-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-family: 'Inconsolata', monospace;
+      color: #ddd;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff6b6b;
+      animation: pulse 2s infinite;
+    }
+
+    .status-indicator.connected {
+      background: #4CAF50;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Dream Text Display in Center */
+    .dream-display-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 90;
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      padding: 30px 40px;
+      backdrop-filter: blur(15px);
+      max-width: 80%;
+      max-height: 60%;
+      text-align: center;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .dream-display-center.hidden {
+      display: none;
+    }
+
+    .dream-center-header {
+      margin-bottom: 20px;
+    }
+
+    .dream-center-id {
+      font-family: 'Archivo', sans-serif;
+      font-size: 24px;
+      color: #ff6b6b;
+      margin: 0 0 8px 0;
+    }
+
+    .dream-center-timestamp {
+      font-family: 'Inconsolata', monospace;
+      font-size: 12px;
+      color: #888;
+      margin: 0 0 20px 0;
+    }
+
+    .dream-center-text {
+      font-family: 'Inconsolata', monospace;
+      font-size: 16px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.95);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
+    .dream-center-close {
+      font-family: 'Inconsolata', monospace;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 15px;
+      font-style: italic;
+    }
+
+    /* Left Half - Latest Dream + Similar Dreams */
+    .similar-dreams-section {
+      flex: 1;
+      padding: 30px;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Latest Dream Display */
+    .latest-dream-display {
+      margin-bottom: 30px;
+      background: rgba(255, 107, 107, 0.05);
+      border: 1px solid rgba(255, 107, 107, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      overflow-y: auto;
+      max-height: 40%;
+    }
+
+    .latest-dream-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .latest-dream-id {
+      font-family: 'Archivo', sans-serif;
+      font-size: 18px;
+      color: #ff6b6b;
+      font-weight: bold;
+    }
+
+    .latest-dream-timestamp {
+      font-family: 'Inconsolata', monospace;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .latest-dream-text {
+      font-family: 'Inconsolata', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.9);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    /* Right Half - AI Analysis */
+    .analysis-section {
+      flex: 1;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .section-header {
+      font-family: 'Archivo', sans-serif;
+      font-size: 20px;
+      color: #fff;
+      margin: 0 0 20px 0;
+      text-align: center;
+    }
+
+    .analysis-header {
+      color: #ff6b6b;
+    }
+
+    /* Similar Dreams List */
+    .similar-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .similar-item {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .similar-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .similar-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .similar-item-id {
+      font-family: 'Inconsolata', monospace;
+      font-size: 14px;
+      color: #ff6b6b;
+      font-weight: bold;
+    }
+
+    .similarity-score {
+      font-family: 'Inconsolata', monospace;
+      font-size: 12px;
+      color: #888;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .similar-item-text {
+      font-family: 'Inconsolata', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.9);
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* AI Analysis Content */
+    .analysis-content {
+      flex: 1;
+      font-family: 'Inconsolata', monospace;
+      font-size: 16px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.9);
+      overflow-y: auto;
+      background: rgba(255, 107, 107, 0.05);
+      border: 1px solid rgba(255, 107, 107, 0.2);
+      border-radius: 12px;
+      padding: 25px;
+      word-wrap: break-word;
+    }
+
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      color: #888;
+      font-family: 'Inconsolata', monospace;
+    }
+
+    .waiting-message {
+      text-align: center;
+      color: #666;
+      font-family: 'Inconsolata', monospace;
+      font-style: italic;
+      padding: 40px;
+    }
+
+    /* Constellation highlight for new dreams */
+    .node.newest {
+      fill: #ff6b6b !important;
+      stroke: #ff6b6b !important;
+      stroke-width: 3px !important;
+      filter: drop-shadow(0 0 10px rgba(255, 107, 107, 0.8));
+    }
+
+    /* Custom scrollbars */
+    .similar-list::-webkit-scrollbar,
+    .analysis-content::-webkit-scrollbar,
+    .dream-center-text::-webkit-scrollbar,
+    .latest-dream-display::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .similar-list::-webkit-scrollbar-track,
+    .analysis-content::-webkit-scrollbar-track,
+    .dream-center-text::-webkit-scrollbar-track,
+    .latest-dream-display::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+
+    .similar-list::-webkit-scrollbar-thumb,
+    .analysis-content::-webkit-scrollbar-thumb,
+    .dream-center-text::-webkit-scrollbar-thumb,
+    .latest-dream-display::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    .similar-list::-webkit-scrollbar-thumb:hover,
+    .analysis-content::-webkit-scrollbar-thumb:hover,
+    .dream-center-text::-webkit-scrollbar-thumb:hover,
+    .latest-dream-display::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .constellation-section {
+        height: 50vh;
+      }
+
+      .content-section {
+        height: 50vh;
+        flex-direction: column;
+      }
+
+      .similar-dreams-section,
+      .analysis-section {
+        padding: 20px;
+        border: none;
+        flex: 1;
+      }
+
+      .similar-dreams-section {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .latest-dream-display {
+        margin-bottom: 20px;
+        padding: 15px;
+        max-height: 35%;
+      }
+
+      .latest-dream-id {
+        font-size: 16px;
+      }
+
+      .latest-dream-text {
+        font-size: 13px;
+      }
+
+      .dream-display-center {
+        max-width: 90%;
+        max-height: 70%;
+        padding: 20px;
+      }
+
+      .dream-center-id {
+        font-size: 20px;
+      }
+
+      .dream-center-text {
+        font-size: 14px;
+      }
+
+      .section-header {
+        font-size: 18px;
+        margin-bottom: 15px;
+      }
+
+      .similar-item {
+        padding: 15px;
+      }
+
+      .analysis-content {
+        padding: 20px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Logo linking to home -->
+  <div class="logo-container">
+    <a href="/">
+      <img src="{{ url_for('static', filename='imgs/DreamAtlas_logo.svg') }}" alt="DreamAtlas Logo">
+    </a>
+  </div>
+
+  <!-- Live Status Header -->
+  <div class="live-header">
+    <div class="live-status">
+      <span class="status-indicator" id="statusIndicator"></span>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </div>
+
+  <div class="live-layout">
+    <!-- Top 60% - Constellation -->
+    <div class="constellation-section">
+      <svg id="constellation"></svg>
+      
+      <!-- Dream Display in Center -->
+      <div class="dream-display-center hidden" id="dreamDisplayCenter">
+        <div class="dream-center-header">
+          <div class="dream-center-id" id="dreamCenterId">Latest Dream</div>
+          <div class="dream-center-timestamp" id="dreamCenterTimestamp"></div>
+        </div>
+        <div class="dream-center-text" id="dreamCenterText"></div>
+        <div class="dream-center-close">Click anywhere to close</div>
+      </div>
+    </div>
+
+    <!-- Bottom 40% - Split content -->
+    <div class="content-section">
+      <!-- Left Half - Latest Dream + Similar Dreams -->
+      <div class="similar-dreams-section">
+        <!-- Latest Dream Display -->
+        <div class="latest-dream-display" id="latestDreamDisplay" style="display: none;">
+          <div class="latest-dream-header">
+            <div class="latest-dream-id" id="latestDreamId">Latest Dream</div>
+            <div class="latest-dream-timestamp" id="latestDreamTimestamp"></div>
+          </div>
+          <div class="latest-dream-text" id="latestDreamText"></div>
+        </div>
+
+        <h3 class="section-header">Most Similar Dreams</h3>
+        <div class="similar-list" id="similarList">
+          <div class="waiting-message">
+            Similar dreams will appear here once a dream is loaded.
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Half - AI Analysis -->
+      <div class="analysis-section">
+        <h3 class="section-header analysis-header">Collective Analysis</h3>
+        <div class="analysis-content" id="analysisContent">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p style="margin-top: 20px;">Analyzing patterns across the dreambank...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Dreams Script -->
+  <script>
+    let currentDreamCount = 0;
+    let isConnected = false;
+    let constellationData = { nodes: [], links: [] };
+    let svg, container, zoom;
+    let currentNewestDreamId = null;
+    
+    // DOM elements
+    const statusIndicator = document.getElementById('statusIndicator');
+    const statusText = document.getElementById('statusText');
+    const dreamDisplayCenter = document.getElementById('dreamDisplayCenter');
+    const dreamCenterId = document.getElementById('dreamCenterId');
+    const dreamCenterTimestamp = document.getElementById('dreamCenterTimestamp');
+    const dreamCenterText = document.getElementById('dreamCenterText');
+    const latestDreamDisplay = document.getElementById('latestDreamDisplay');
+    const latestDreamId = document.getElementById('latestDreamId');
+    const latestDreamTimestamp = document.getElementById('latestDreamTimestamp');
+    const latestDreamText = document.getElementById('latestDreamText');
+    const similarList = document.getElementById('similarList');
+    const analysisContent = document.getElementById('analysisContent');
+
+    function updateStatus(connected, text) {
+      isConnected = connected;
+      statusIndicator.className = connected ? 'status-indicator connected' : 'status-indicator';
+      statusText.textContent = text;
+    }
+
+    function formatTimestamp(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleString();
+    }
+
+    function showDreamCenter(dreamData) {
+      dreamCenterId.textContent = `Dream #${dreamData.id}`;
+      dreamCenterTimestamp.textContent = formatTimestamp(dreamData.timestamp);
+      dreamCenterText.textContent = dreamData.text;
+      dreamDisplayCenter.classList.remove('hidden');
+      
+      // Add click handler to close
+      dreamDisplayCenter.onclick = function(e) {
+        if (e.target === dreamDisplayCenter || e.target.classList.contains('dream-center-close')) {
+          hideDreamCenter();
+        }
+      };
+      
+      // ESC key to close
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    function hideDreamCenter() {
+      dreamDisplayCenter.classList.add('hidden');
+      document.removeEventListener('keydown', handleEscapeKey);
+    }
+
+    function handleEscapeKey(e) {
+      if (e.key === 'Escape') {
+        hideDreamCenter();
+      }
+    }
+
+    function initConstellation() {
+      const width = document.querySelector('.constellation-section').offsetWidth;
+      const height = document.querySelector('.constellation-section').offsetHeight;
+
+      svg = d3.select("#constellation")
+        .attr("width", width)
+        .attr("height", height);
+
+      container = svg.append("g");
+
+      zoom = d3.zoom()
+        .scaleExtent([0.1, 10])
+        .on("zoom", function () {
+          container.attr("transform", d3.event.transform);
+        });
+
+      svg.call(zoom);
+
+      // Add resize handler
+      window.addEventListener('resize', () => {
+        const newWidth = document.querySelector('.constellation-section').offsetWidth;
+        const newHeight = document.querySelector('.constellation-section').offsetHeight;
+        svg.attr("width", newWidth).attr("height", newHeight);
+      });
+    }
+
+    function updateConstellation(newDreamId = null) {
+      if (!constellationData.nodes.length) return;
+
+      const width = +svg.attr("width");
+      const height = +svg.attr("height");
+
+      // Scales for positioning
+      const xScale = d3.scaleLinear().domain([0, 30]).range([0, width]);
+      const yScale = d3.scaleLinear().domain([0, 30]).range([0, height]);
+
+      // Size scale for nodes
+      const scoreExtent = d3.extent(constellationData.nodes, d => d.score);
+      if (scoreExtent[0] === scoreExtent[1]) {
+        scoreExtent[0] *= 0.9;
+        scoreExtent[1] *= 1.1;
+      }
+      const sizeScale = d3.scalePow().exponent(2)
+        .domain(scoreExtent)
+        .range([2, 8]);
+
+      // Clear existing elements
+      container.selectAll("*").remove();
+
+      // Draw links
+      const links = container.append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(constellationData.links)
+        .enter().append("line")
+        .attr("class", "link")
+        .style("stroke", "#ccc")
+        .style("stroke-width", d => d.similarity * 2)
+        .style("stroke-opacity", 0.6)
+        .attr("x1", d => xScale(constellationData.nodes.find(n => n.id === d.source).x))
+        .attr("y1", d => yScale(constellationData.nodes.find(n => n.id === d.source).y))
+        .attr("x2", d => xScale(constellationData.nodes.find(n => n.id === d.target).x))
+        .attr("y2", d => yScale(constellationData.nodes.find(n => n.id === d.target).y));
+
+      // Draw nodes
+      const nodes = container.append("g")
+        .attr("class", "nodes")
+        .selectAll("circle")
+        .data(constellationData.nodes)
+        .enter().append("circle")
+        .attr("class", d => d.id === newDreamId ? "node newest" : "node")
+        .attr("cx", d => xScale(d.x))
+        .attr("cy", d => yScale(d.y))
+        .attr("r", d => sizeScale(d.score))
+        .attr("fill", d => d.id === newDreamId ? "#ff6b6b" : "#fff")
+        .style("cursor", "pointer")
+        .on("click", function(d) {
+          // Show dream details when clicking nodes
+          if (currentDreamData && d.id === currentDreamData.id) {
+            showDreamCenter(currentDreamData);
+          }
+        });
+
+      // Focus on newest dream if provided
+      if (newDreamId) {
+        const targetNode = constellationData.nodes.find(n => n.id === newDreamId);
+        if (targetNode) {
+          const targetX = xScale(targetNode.x);
+          const targetY = yScale(targetNode.y);
+          const scale = 3;
+          const tx = width / 2 - targetX * scale;
+          const ty = height / 2 - targetY * scale;
+          
+          svg.transition()
+            .duration(1500)
+            .ease(d3.easeQuadInOut)
+            .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        }
+      }
+
+      currentNewestDreamId = newDreamId;
+    }
+
+    async function loadConstellationData() {
+      try {
+        const response = await fetch('/api/live_constellation');
+        const data = await response.json();
+        constellationData = data;
+        updateConstellation(currentNewestDreamId);
+      } catch (error) {
+        console.error('Error loading constellation:', error);
+      }
+    }
+
+    let currentDreamData = null;
+
+    function displayDream(dreamData) {
+      currentDreamData = dreamData;
+      
+      // Update latest dream display
+      latestDreamId.textContent = `Dream #${dreamData.id}`;
+      latestDreamTimestamp.textContent = formatTimestamp(dreamData.timestamp);
+      latestDreamText.textContent = dreamData.text;
+      latestDreamDisplay.style.display = 'block';
+      
+      // Show dream center automatically for a few seconds
+      showDreamCenter(dreamData);
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        hideDreamCenter();
+      }, 5000);
+      
+      // Display similar dreams
+      similarList.innerHTML = '';
+      
+      if (dreamData.similar_dreams && dreamData.similar_dreams.length > 0) {
+        dreamData.similar_dreams.forEach(similar => {
+          const item = document.createElement('div');
+          item.className = 'similar-item';
+          item.innerHTML = `
+            <div class="similar-item-header">
+              <span class="similar-item-id">#${similar.id}</span>
+              <span class="similarity-score">${(similar.similarity * 100).toFixed(1)}%</span>
+            </div>
+            <div class="similar-item-text">${similar.text}</div>
+          `;
+          
+          item.addEventListener('click', () => {
+            window.open(`/submitted/${similar.id}`, '_blank');
+          });
+          
+          similarList.appendChild(item);
+        });
+      } else {
+        similarList.innerHTML = '<div class="waiting-message">No similar dreams found yet.</div>';
+      }
+
+      // Display LLM analysis
+      if (dreamData.llm_analysis) {
+        analysisContent.textContent = dreamData.llm_analysis;
+      } else {
+        analysisContent.innerHTML = '<div class="loading-state"><p>Analysis unavailable</p></div>';
+      }
+    }
+
+    async function checkForNewDreams() {
+      try {
+        const response = await fetch('/api/dream_count');
+        const data = await response.json();
+        
+        if (data.count > currentDreamCount) {
+          currentDreamCount = data.count;
+          await loadLatestDream();
+          await loadConstellationData(); // Refresh constellation
+        }
+        
+        if (!isConnected) {
+          updateStatus(true, 'Live');
+        }
+      } catch (error) {
+        console.error('Error checking for new dreams:', error);
+        updateStatus(false, 'Connection error');
+      }
+    }
+
+    async function loadLatestDream() {
+      try {
+        const response = await fetch('/api/latest_dream');
+        const dreamData = await response.json();
+        
+        if (dreamData.error) {
+          latestDreamDisplay.style.display = 'none';
+          similarList.innerHTML = '<div class="waiting-message">No dreams yet. Waiting for the first submission...</div>';
+          analysisContent.innerHTML = '<div class="loading-state"><p>No dreams to analyze yet.</p></div>';
+          return;
+        }
+        
+        displayDream(dreamData);
+        updateConstellation(dreamData.id);
+      } catch (error) {
+        console.error('Error loading latest dream:', error);
+        updateStatus(false, 'Error loading dream');
+      }
+    }
+
+    // Initialize
+    async function init() {
+      updateStatus(false, 'Loading...');
+      initConstellation();
+      
+      try {
+        const response = await fetch('/api/dream_count');
+        const data = await response.json();
+        currentDreamCount = data.count;
+        
+        await loadConstellationData();
+        
+        if (currentDreamCount > 0) {
+          await loadLatestDream();
+        }
+        
+        updateStatus(true, 'Live');
+      } catch (error) {
+        console.error('Error during initialization:', error);
+        updateStatus(false, 'Connection failed');
+      }
+    }
+
+    // Poll for new dreams every 3 seconds
+    setInterval(checkForNewDreams, 3000);
+    
+    // Initialize the page
+    init();
+  </script>
+</body>
+</html>
