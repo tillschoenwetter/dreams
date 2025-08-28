@@ -1648,3 +1648,198 @@ footer {
   }
 }
 
+/* Right Third - AI Analysis + QR Code */
+.analysis-section {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.section-header {
+  font-family: 'Archivo', sans-serif;
+  font-size: 24px;
+  color: #fff;
+  margin: 0 0 25px 0;
+  text-align: center;
+}
+
+.analysis-header {
+  color: #ff6b6b;
+}
+
+/* Remove the old analysis-header-container styles and replace with: */
+/* AI Analysis Content - takes most of the space */
+.analysis-content {
+  flex: 1;
+  font-family: 'Inconsolata', monospace;
+  font-size: 18px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  overflow-y: auto;
+  background: rgba(255, 107, 107, 0.05);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  border-radius: 15px;
+  padding: 30px;
+  word-wrap: break-word;
+  margin-bottom: 20px;
+}
+
+/* Large QR Code Container - below analysis */
+.qr-code-container-large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  min-height: 200px;
+}
+
+#qrCodeImg {
+  width: 150px;
+  height: 150px;
+  opacity: 0.9;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+#qrCodeImg:hover {
+  opacity: 1;
+  transform: scale(1.05);
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.qr-code-label {
+  font-family: 'Inconsolata', monospace;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* Large screen optimizations */
+@media (min-width: 1920px) and (min-height: 3000px) {
+  /* 55" vertical screen optimizations */
+  .constellation-section {
+    height: 75vh;
+  }
+
+  .content-section {
+    height: 25vh;
+  }
+
+  .live-status {
+    font-size: 24px;
+    padding: 16px 32px;
+  }
+
+  .section-header {
+    font-size: 28px;
+  }
+
+  .latest-dream-id {
+    font-size: 28px;
+  }
+
+  .latest-dream-text {
+    font-size: 20px;
+  }
+
+  .similar-item-text {
+    font-size: 18px;
+  }
+
+  .analysis-content {
+    font-size: 20px;
+  }
+
+  /* Super large QR code for 55" screen */
+  #qrCodeImg {
+    width: 200px;
+    height: 200px;
+  }
+
+  .qr-code-label {
+    font-size: 20px;
+  }
+
+  .qr-code-container-large {
+    min-height: 280px;
+    padding: 30px;
+  }
+}
+
+/* Remove old qr-code-container styles and replace with fallback for mobile */
+@media (max-width: 768px) {
+  .constellation-section {
+    height: 60vh;
+  }
+
+  .content-section {
+    height: 40vh;
+    flex-direction: column;
+  }
+
+  .latest-dream-section,
+  .similar-dreams-section,
+  .analysis-section {
+    padding: 20px;
+    border: none;
+    flex: 1;
+  }
+
+  .latest-dream-section {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .similar-dreams-section {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Smaller QR code on mobile but still prominent */
+  #qrCodeImg {
+    width: 100px;
+    height: 100px;
+  }
+
+  .qr-code-label {
+    font-size: 14px;
+  }
+
+  .qr-code-container-large {
+    min-height: 150px;
+    padding: 15px;
+  }
+
+  .analysis-content {
+    margin-bottom: 15px;
+  }
+}
+
+/* Very small screens - still show QR code but smaller */
+@media (max-width: 480px) {
+  #qrCodeImg {
+    width: 80px;
+    height: 80px;
+  }
+
+  .qr-code-label {
+    font-size: 12px;
+  }
+
+  .qr-code-container-large {
+    min-height: 120px;
+    padding: 10px;
+  }
+}
+

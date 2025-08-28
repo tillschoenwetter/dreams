@@ -11,6 +11,10 @@ import openai  # Add this import
 import qrcode
 import io
 import base64
+from dotenv import load_dotenv  # Add this import
+
+# Load environment variables from .env file
+load_dotenv()
 
 # DEBUG REMINDER, IF NOTHING WORKS CHECK THE END OF THE SCRIPT
 
@@ -18,8 +22,13 @@ app = Flask(__name__)
 model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')  # Larger, better at paraphrasing
 DEFAULT_THRESHOLD = 0.5
 
-# Add OpenAI configuration
-openai.api_key = "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"
+# Get OpenAI API key from environment variable
+openai_api_key = os.getenv('OPENAI_API_KEY')
+if not openai_api_key:
+    raise ValueError("OPENAI_API_KEY environment variable is not set")
+
+# Configure OpenAI
+openai.api_key = openai_api_key
 
 def preprocess_dream(text):
     return text.strip()
@@ -400,9 +409,9 @@ PREVIOUS DREAMS (from the dreambank, submitted by other dreamers):
 
 Analyze how this newest dream relates to the collective patterns, themes, and symbols present in the dreambank. Consider what this dream reveals about shared human experiences, common anxieties, or universal symbols that appear across different dreamers. Focus on connections and contrasts between this individual's subconscious and the broader collective unconscious represented in the dreambank."""
         
-        # Initialize OpenAI client with the new syntax
+        # Initialize OpenAI client with the API key from environment
         from openai import OpenAI
-        client = OpenAI(api_key="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")
+        client = OpenAI(api_key=openai_api_key)
         
         # Make API call to OpenAI using new syntax
         response = client.chat.completions.create(
