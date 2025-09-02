@@ -100,6 +100,7 @@ body.loading {
     content: "";
     position: absolute;
     background: #fff;     /* white cross; tweak as you like */
+    opacity: 0.8;
   }
   /* horizontal line */
   #centerCross::before {
@@ -194,3 +195,55 @@ body.loading {
     z-index: 2000;                   /* above everything else          */
     pointer-events: all;             /* accept clicks (for close btn)  */
   }
+
+/* Remove the default cursor hiding */
+/* .constellation-container,
+svg,
+.circle-container {
+  cursor: none !important;
+} */
+
+/* Only hide cursor when pointer is locked */
+.constellation-container.cursor-locked,
+.constellation-container.cursor-locked svg,
+.constellation-container.cursor-locked .circle-container {
+  cursor: none !important;
+}
+
+/* Make sure crosshair is visible and centered */
+#centerCross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 100;
+}
+
+#centerCross::before,
+#centerCross::after {
+  content: "";
+  position: absolute;
+  background: #fff;
+  opacity: 0.8;
+}
+
+/* horizontal line */
+#centerCross::before {
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+/* vertical line */
+#centerCross::after {
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  transform: translateX(-50%);
+}

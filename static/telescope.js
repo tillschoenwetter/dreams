@@ -49,12 +49,84 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
 
     // Zoom setup
     const zoom = d3.zoom()
-        .scaleExtent([0.005, 20])
+        .scaleExtent([1, 5])  // Changed to [1, 5] - no zooming out beyond normal view
         .on("zoom", function () {
             container.attr("transform", d3.event.transform);
             updateCenterPreview();
         });
     svg.call(zoom);
+
+    // Pointer Lock API to lock cursor in center
+    const svgElement = svg.node();
+    
+    // Request pointer lock when clicking on the SVG
+    svgElement.addEventListener('click', function() {
+        svgElement.requestPointerLock();
+    });
+
+    // Handle pointer lock change
+    document.addEventListener('pointerlockchange', function() {
+        if (document.pointerLockElement === svgElement) {
+            console.log('Cursor locked to center');
+            // Cursor is now locked
+        } else {
+            console.log('Cursor unlocked');
+            // Cursor is unlocked
+        }
+    });
+
+    // Handle mouse movement when cursor is locked
+    document.addEventListener('mousemove', function(e) {
+        if (document.pointerLockElement === svgElement) {
+            // Much higher sensitivity for mouse movement
+            const sensitivity = 5.0;
+            moveTelescopeX(e.movementX * sensitivity);
+            moveTelescopeY(e.movementY * sensitivity);
+        }
+    });
+
+    // Handle mouse wheel for zooming when cursor is locked
+    svgElement.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        if (document.pointerLockElement === svgElement) {
+            const currentTransform = d3.zoomTransform(svg.node());
+            
+            // Get exact center point of the crosshair
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            // Calculate the world coordinates at crosshair center
+            const worldCenterX = (centerX - currentTransform.x) / currentTransform.k;
+            const worldCenterY = (centerY - currentTransform.y) / currentTransform.k;
+            
+            let newScale = currentTransform.k;
+            
+            // Apply zoom based on wheel direction
+            if (e.deltaY > 0) {
+                newScale *= (1 - ZOOM_SENSITIVITY);  // Zoom out
+            } else {
+                newScale *= (1 + ZOOM_SENSITIVITY);  // Zoom in
+            }
+            
+            // Keep zoom within bounds - updated limits
+            newScale = Math.max(1, Math.min(5, newScale));  // Changed to [1, 5]
+            
+            // Calculate new translation to keep crosshair center fixed
+            const newX = centerX - worldCenterX * newScale;
+            const newY = centerY - worldCenterY * newScale;
+            
+            const newTransform = d3.zoomIdentity.translate(newX, newY).scale(newScale);
+            svg.call(zoom.transform, newTransform);
+            updateCenterPreview();
+        }
+    });
+
+    // Escape key to unlock cursor
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.pointerLockElement === svgElement) {
+            document.exitPointerLock();
+        }
+    });
 
     // Add debugging right after svg setup
     console.log("=== TELESCOPE DEBUG ===");
@@ -62,46 +134,86 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     console.log("Zoom object:", zoom);
     console.log("Constellation data - Nodes:", nodes.length, "Links:", links.length);
 
-    // Simple rotary input - no complex animation loops
-    const MOVE_SENSITIVITY = 0.00000001;   // How fast it moves
-    const ZOOM_SENSITIVITY = 0.00001;  // How fast it zooms
+    // Simple rotary input - ultra smooth settings
+    const BASE_MOVE_SENSITIVITY = 5.0;     // Much higher base sensitivity
+    let ZOOM_SENSITIVITY = 0.0001;         // Much smoother zoom
 
-    // Direct movement functions
+    // Direct movement functions - with zoom-based speed adjustment
     window.moveTelescopeX = function(value) {
-        console.log("moveTelescopeX called with:", value);
         const currentTransform = d3.zoomTransform(svg.node());
-        const newX = currentTransform.x + (value * MOVE_SENSITIVITY);
+        
+        // Simple linear speed based on zoom level
+        // At zoom 1: multiply by 10, at zoom 5: multiply by 1
+        const speedMultiplier = (6 - currentTransform.k) * 2; // Simple linear calculation
+        const adjustedSensitivity = BASE_MOVE_SENSITIVITY * speedMultiplier;
+        
+        console.log(`Zoom: ${currentTransform.k}, Speed: ${speedMultiplier}, Final speed: ${adjustedSensitivity}`);
+        
+        const newX = currentTransform.x + (value * adjustedSensitivity);
         const newTransform = d3.zoomIdentity.translate(newX, currentTransform.y).scale(currentTransform.k);
         svg.call(zoom.transform, newTransform);
         updateCenterPreview();
     };
 
     window.moveTelescopeY = function(value) {
-        console.log("moveTelescopeY called with:", value);
         const currentTransform = d3.zoomTransform(svg.node());
-        const newY = currentTransform.y + (value * MOVE_SENSITIVITY);
+        
+        // Simple linear speed based on zoom level
+        // At zoom 1: multiply by 10, at zoom 5: multiply by 1
+        const speedMultiplier = (6 - currentTransform.k) * 2; // Simple linear calculation
+        const adjustedSensitivity = BASE_MOVE_SENSITIVITY * speedMultiplier;
+        
+        const newY = currentTransform.y + (value * adjustedSensitivity);
         const newTransform = d3.zoomIdentity.translate(currentTransform.x, newY).scale(currentTransform.k);
         svg.call(zoom.transform, newTransform);
         updateCenterPreview();
     };
 
+    // Handle mouse movement when cursor is locked - also increase sensitivity
+    document.addEventListener('mousemove', function(e) {
+        if (document.pointerLockElement === svgElement) {
+            // Much higher sensitivity for mouse movement
+            const sensitivity = 5.0;
+            moveTelescopeX(e.movementX * sensitivity);
+            moveTelescopeY(e.movementY * sensitivity);
+        }
+    });
+
     window.zoomTelescope = function(direction) {
-        console.log("zoomTelescope called with direction:", direction);
         const currentTransform = d3.zoomTransform(svg.node());
+        
+        // Get exact center point of the crosshair (middle of screen)
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        // Calculate the world coordinates that are currently at the exact crosshair center
+        const worldCenterX = (centerX - currentTransform.x) / currentTransform.k;
+        const worldCenterY = (centerY - currentTransform.y) / currentTransform.k;
+        
         let newScale = currentTransform.k;
         
+        // Ultra smooth zoom increments for rotary sensor
         if (direction > 0) {
             newScale *= (1 + ZOOM_SENSITIVITY);  // Zoom in
         } else if (direction < 0) {
             newScale *= (1 - ZOOM_SENSITIVITY);  // Zoom out
         }
         
-        // Keep zoom within bounds
-        newScale = Math.max(0.005, Math.min(20, newScale));
+        // Keep zoom within bounds - updated limits
+        newScale = Math.max(1, Math.min(5, newScale));  // Changed to [1, 5]
         
-        const newTransform = d3.zoomIdentity.translate(currentTransform.x, currentTransform.y).scale(newScale);
+        // Calculate new translation to keep the exact crosshair point fixed
+        const newX = centerX - worldCenterX * newScale;
+        const newY = centerY - worldCenterY * newScale;
+        
+        const newTransform = d3.zoomIdentity.translate(newX, newY).scale(newScale);
         svg.call(zoom.transform, newTransform);
         updateCenterPreview();
+    };
+
+    // Function to adjust zoom sensitivity
+    window.setZoomSensitivity = function(sensitivity) {
+        ZOOM_SENSITIVITY = sensitivity;
     };
 
     console.log("Simple telescope functions defined:");
@@ -116,8 +228,8 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         let ty = currentTransform.y;
         let k = currentTransform.k;
 
-        const MOVE_SPEED = 2;  // Reduced for smoother keyboard movement
-        const ZOOM_SPEED = 0.05; // Reduced for smoother keyboard zoom
+        const MOVE_SPEED = 3;  // Reduced for smoother keyboard movement
+        const ZOOM_SPEED = 0.005; // Reduced for smoother keyboard zoom
 
         // Set navigating to true
         userIsNavigating = true;
