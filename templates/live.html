@@ -694,6 +694,7 @@
 
       const width = +svg.attr("width");
       const height = +svg.attr("height");
+      const threshold = 0.6; // Default threshold for connection visibility
 
       // Scales for positioning
       const xScale = d3.scaleLinear().domain([0, 30]).range([0, width]);
@@ -712,7 +713,7 @@
       // Clear existing elements
       container.selectAll("*").remove();
 
-      // Draw links with improved styling
+      // Draw links with improved styling and threshold filtering
       const links = container.append("g")
         .attr("class", "links")
         .selectAll("line")
@@ -721,10 +722,15 @@
         .attr("class", "link")
         .style("stroke", "#ccc")
         .style("stroke-width", function(d) {
-          const baseWidth = getStrokeWidth(d.similarity);
-          return (d.source === newDreamId || d.target === newDreamId) ? baseWidth * 2 : baseWidth;
+          if (d.similarity >= threshold) {
+            const baseWidth = getStrokeWidth(d.similarity);
+            return (d.source === newDreamId || d.target === newDreamId) ? baseWidth * 2 : baseWidth;
+          }
+          return 0; // Hide connections below threshold
         })
-        .style("stroke-opacity", 0.6)
+        .style("stroke-opacity", function(d) {
+          return d.similarity >= threshold ? 0.3 : 0; // Hide connections below threshold
+        })
         .style("pointer-events", "none")
         .attr("x1", d => xScale(constellationData.nodes.find(n => n.id === d.source).x))
         .attr("y1", d => yScale(constellationData.nodes.find(n => n.id === d.source).y))
