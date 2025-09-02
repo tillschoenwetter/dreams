@@ -56,26 +56,79 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         });
     svg.call(zoom);
 
-    // Keyboard controls for navigation
+    // Add debugging right after svg setup
+    console.log("=== TELESCOPE DEBUG ===");
+    console.log("SVG element:", svg.node());
+    console.log("Zoom object:", zoom);
+    console.log("Constellation data - Nodes:", nodes.length, "Links:", links.length);
+
+    // Simple rotary input - no complex animation loops
+    const MOVE_SENSITIVITY = 0.00000001;   // How fast it moves
+    const ZOOM_SENSITIVITY = 0.00001;  // How fast it zooms
+
+    // Direct movement functions
+    window.moveTelescopeX = function(value) {
+        console.log("moveTelescopeX called with:", value);
+        const currentTransform = d3.zoomTransform(svg.node());
+        const newX = currentTransform.x + (value * MOVE_SENSITIVITY);
+        const newTransform = d3.zoomIdentity.translate(newX, currentTransform.y).scale(currentTransform.k);
+        svg.call(zoom.transform, newTransform);
+        updateCenterPreview();
+    };
+
+    window.moveTelescopeY = function(value) {
+        console.log("moveTelescopeY called with:", value);
+        const currentTransform = d3.zoomTransform(svg.node());
+        const newY = currentTransform.y + (value * MOVE_SENSITIVITY);
+        const newTransform = d3.zoomIdentity.translate(currentTransform.x, newY).scale(currentTransform.k);
+        svg.call(zoom.transform, newTransform);
+        updateCenterPreview();
+    };
+
+    window.zoomTelescope = function(direction) {
+        console.log("zoomTelescope called with direction:", direction);
+        const currentTransform = d3.zoomTransform(svg.node());
+        let newScale = currentTransform.k;
+        
+        if (direction > 0) {
+            newScale *= (1 + ZOOM_SENSITIVITY);  // Zoom in
+        } else if (direction < 0) {
+            newScale *= (1 - ZOOM_SENSITIVITY);  // Zoom out
+        }
+        
+        // Keep zoom within bounds
+        newScale = Math.max(0.005, Math.min(20, newScale));
+        
+        const newTransform = d3.zoomIdentity.translate(currentTransform.x, currentTransform.y).scale(newScale);
+        svg.call(zoom.transform, newTransform);
+        updateCenterPreview();
+    };
+
+    console.log("Simple telescope functions defined:");
+    console.log("moveTelescopeX:", typeof window.moveTelescopeX);
+    console.log("moveTelescopeY:", typeof window.moveTelescopeY);
+    console.log("zoomTelescope:", typeof window.zoomTelescope);
+
+    // Keep the existing keyboard controls as fallback (but modify them to be less jerky)
     document.addEventListener('keydown', function(event) {
         currentTransform = d3.zoomTransform(svg.node());
         let tx = currentTransform.x;
         let ty = currentTransform.y;
         let k = currentTransform.k;
-    
-        const MOVE_SPEED = 30;
-        const ZOOM_SPEED = 0.1;
-    
+
+        const MOVE_SPEED = 2;  // Reduced for smoother keyboard movement
+        const ZOOM_SPEED = 0.05; // Reduced for smoother keyboard zoom
+
         // Set navigating to true
         userIsNavigating = true;
-    
+
         // Optional: close the modal if it's open
         if (openDreamId !== null) {
             dreamModal.style("display", "none").html("");
             openDreamId = null;
             d3.select(window).on("click.modal", null);
         }
-    
+
         // Movement / zoom
         switch(event.key) {
             case 'ArrowLeft': tx += MOVE_SPEED; break;
@@ -89,16 +142,16 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
             default:
                 return; // Don't do anything if another key is pressed
         }
-    
+
         const newTransform = d3.zoomIdentity.translate(tx, ty).scale(k);
-        svg.transition().duration(100).call(zoom.transform, newTransform);
+        svg.transition().duration(50).call(zoom.transform, newTransform); // Faster transition
         updateCenterPreview();
-    
+
         // Reset navigating after a short pause
         clearTimeout(window.navigationTimeout);
         window.navigationTimeout = setTimeout(() => {
             userIsNavigating = false;
-        }, 500); // 0.5 sec pause resets the flag
+        }, 200); // Shorter timeout
     });
     
     
