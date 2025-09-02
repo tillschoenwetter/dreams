@@ -3,7 +3,5 @@ dreams.db
 __pycache__/
 dreams.sb.backup
 desktop.ini
-dreams.db
 .DS_Store
-dreams.db
 .env

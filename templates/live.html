@@ -196,6 +196,9 @@
       flex-direction: column;
       overflow: hidden;
     }
+    .analysis-section h3 {
+      margin-bottom: 20px;
+    }
 
     /* Analysis header container to hold title and QR code */
     .analysis-header-container {
@@ -210,6 +213,10 @@
       margin: 0; /* Remove default margin since it's in a flex container */
     }
 
+    .section-header {
+      color: #ff6b6b;
+    }
+
     .qr-code-container {
       display: flex;
       flex-direction: column;
@@ -218,8 +225,8 @@
     }
 
     #qrCodeImg {
-      width: 60px;
-      height: 60px;
+      width: 100px;
+      height: 100px;
       opacity: 0.8;
       transition: opacity 0.3s ease, transform 0.3s ease;
       border-radius: 4px;
@@ -235,7 +242,7 @@
 
     .qr-code-label {
       font-family: 'Inconsolata', monospace;
-      font-size: 10px;
+      font-size: 16px;
       color: rgba(255, 255, 255, 0.6);
       text-align: center;
     }
@@ -477,7 +484,6 @@
           <div class="dream-center-timestamp" id="dreamCenterTimestamp"></div>
         </div>
         <div class="dream-center-text" id="dreamCenterText"></div>
-        <div class="dream-center-close">Click anywhere to close</div>
       </div>
     </div>
 
@@ -486,6 +492,7 @@
       <!-- Left Half - Latest Dream + Similar Dreams -->
       <div class="similar-dreams-section">
         <!-- Latest Dream Display -->
+        <h3 class="section-header">Latest Dream Submitted</h3>
         <div class="latest-dream-display" id="latestDreamDisplay" style="display: none;">
           <div class="latest-dream-header">
             <div class="latest-dream-id" id="latestDreamId">Latest Dream</div>
@@ -573,6 +580,47 @@
     function hideDreamCenter() {
       dreamDisplayCenter.classList.add('hidden');
       document.removeEventListener('keydown', handleEscapeKey);
+      
+      // Zoom out and center the full constellation
+      showFullConstellation();
+    }
+
+    function showFullConstellation() {
+      if (!constellationData.nodes.length) return;
+
+      const width = +svg.attr("width");
+      const height = +svg.attr("height");
+      
+      // Calculate the bounds of all nodes
+      const xScale = d3.scaleLinear().domain([0, 30]).range([0, width]);
+      const yScale = d3.scaleLinear().domain([0, 30]).range([0, height]);
+      
+      const nodePositions = constellationData.nodes.map(d => ({
+        x: xScale(d.x),
+        y: yScale(d.y)
+      }));
+      
+      const xExtent = d3.extent(nodePositions, d => d.x);
+      const yExtent = d3.extent(nodePositions, d => d.y);
+      
+      // Add padding
+      const padding = 50;
+      const boundsWidth = xExtent[1] - xExtent[0] + padding * 2;
+      const boundsHeight = yExtent[1] - yExtent[0] + padding * 2;
+      
+      // Calculate scale to fit all nodes
+      const scale = Math.min(width / boundsWidth, height / boundsHeight, 2); // Max scale of 2
+      
+      // Calculate center position
+      const centerX = (xExtent[0] + xExtent[1]) / 2;
+      const centerY = (yExtent[0] + yExtent[1]) / 2;
+      const tx = width / 2 - centerX * scale;
+      const ty = height / 2 - centerY * scale;
+      
+      svg.transition()
+        .duration(2000)
+        .ease(d3.easeQuadInOut)
+        .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
     }
 
     function handleEscapeKey(e) {
@@ -607,6 +655,40 @@
       });
     }
 
+    // Stroke width function matching explore page
+    function getStrokeWidth(similarity) {
+      if (similarity < 0.7) {
+        const clamped = Math.max(0.5, similarity);
+        return 0.01 + ((clamped - 0.5) / 0.2) * (0.1 - 0.001);
+      } else {
+        return 0.1 + ((similarity - 0.7) / 0.3) * (2 - 0.1);
+      }
+    }
+
+    // Update link colors function matching explore page
+    function updateLinkColors(selectedDreamId, newDreamId = null) {
+      d3.selectAll(".link")
+        .style("stroke", function(d) {
+          if (selectedDreamId && (d.source === selectedDreamId || d.target === selectedDreamId)) {
+            return "#ffd700"; // Yellow/gold for connected links
+          }
+          return "#ccc"; // Default gray
+        })
+        .style("stroke-width", function(d) {
+          const baseWidth = getStrokeWidth(d.similarity);
+          if (selectedDreamId && (d.source === selectedDreamId || d.target === selectedDreamId)) {
+            return baseWidth * 1.5; // Make connected links thicker
+          }
+          return (newDreamId && (d.source === newDreamId || d.target === newDreamId)) ? baseWidth * 2 : baseWidth;
+        })
+        .style("stroke-opacity", function(d) {
+          if (selectedDreamId && (d.source === selectedDreamId || d.target === selectedDreamId)) {
+            return 0.9; // Higher opacity for connected links
+          }
+          return 0.6; // Default opacity
+        });
+    }
+
     function updateConstellation(newDreamId = null) {
       if (!constellationData.nodes.length) return;
 
@@ -630,7 +712,7 @@
       // Clear existing elements
       container.selectAll("*").remove();
 
-      // Draw links
+      // Draw links with improved styling
       const links = container.append("g")
         .attr("class", "links")
         .selectAll("line")
@@ -638,8 +720,12 @@
         .enter().append("line")
         .attr("class", "link")
         .style("stroke", "#ccc")
-        .style("stroke-width", d => d.similarity * 2)
+        .style("stroke-width", function(d) {
+          const baseWidth = getStrokeWidth(d.similarity);
+          return (d.source === newDreamId || d.target === newDreamId) ? baseWidth * 2 : baseWidth;
+        })
         .style("stroke-opacity", 0.6)
+        .style("pointer-events", "none")
         .attr("x1", d => xScale(constellationData.nodes.find(n => n.id === d.source).x))
         .attr("y1", d => yScale(constellationData.nodes.find(n => n.id === d.source).y))
         .attr("x2", d => xScale(constellationData.nodes.find(n => n.id === d.target).x))
@@ -656,13 +742,8 @@
         .attr("cy", d => yScale(d.y))
         .attr("r", d => sizeScale(d.score))
         .attr("fill", d => d.id === newDreamId ? "#ff6b6b" : "#fff")
-        .style("cursor", "pointer")
-        .on("click", function(d) {
-          // Show dream details when clicking nodes
-          if (currentDreamData && d.id === currentDreamData.id) {
-            showDreamCenter(currentDreamData);
-          }
-        });
+        .attr("stroke", d => d.id === newDreamId ? "#ff6b6b" : "#fff")
+        .attr("stroke-width", 1);
 
       // Focus on newest dream if provided
       if (newDreamId) {
@@ -706,13 +787,13 @@
       latestDreamText.textContent = dreamData.text;
       latestDreamDisplay.style.display = 'block';
       
-      // Show dream center automatically for a few seconds
+      // Show dream center automatically for 15 seconds
       showDreamCenter(dreamData);
       
-      // Auto-hide after 5 seconds
+      // Auto-hide after 15 seconds
       setTimeout(() => {
         hideDreamCenter();
-      }, 5000);
+      }, 15000);
       
       // Display similar dreams
       similarList.innerHTML = '';
