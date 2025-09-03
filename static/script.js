@@ -430,6 +430,13 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     const tx = width / 2 - dreamX * initialScale;
     const ty = height / 2 - dreamY * initialScale;
     svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(initialScale));
+    
+    // Select the new dream node
+    d3.selectAll('.node').classed('selected', false);
+    d3.selectAll('.node')
+      .filter(d => d.id === newDreamId)
+      .classed('selected', true);
+    updateLinkColors(newDreamId);
   }
   updateSimilarPanel(newDreamId || null);
 
@@ -1099,6 +1106,15 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
             panelClick(d.id);
           }
         });
+        
+        // Auto-select new dream in drawer if it exists
+        if (typeof newDreamId !== 'undefined' && newDreamId) {
+          const newDreamData = nodes.find(n => n.id === newDreamId);
+          if (newDreamData) {
+            console.log('Auto-selecting new dream in mobile drawer:', newDreamId);
+            dreamDrawer.showDream(newDreamData);
+          }
+        }
       }, 1000); // Wait for D3 to finish rendering
     }
 
