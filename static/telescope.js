@@ -485,6 +485,23 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
             console.log("updateCenterPreview called", updateCount, "times");
         }
         const transform = d3.zoomTransform(svg.node());
+        const currentZoomLevel = transform.k;
+        const zoomThreshold = 2.5; // Only show preview when zoomed in above this level
+        
+        // If zoom level is below threshold, hide preview and return
+        if (currentZoomLevel < zoomThreshold) {
+            if (lastClosestNode !== null) {
+                console.log("Zoom level too low, hiding preview");
+                previewBox.classed("fade-out", true)
+                          .classed("fade-in", false);
+                setTimeout(() => {
+                    previewBox.classed("show", false);
+                    lastClosestNode = null;
+                }, 1000);
+            }
+            return;
+        }
+        
         const centerX = width / 2;
         const centerY = height / 2;
         let closestNode = null;
