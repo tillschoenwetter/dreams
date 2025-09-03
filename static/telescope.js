@@ -27,9 +27,9 @@ window.addEventListener('popstate', function() {
 // Ensure data is present before initializing
 if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     // Modal variables - define at top to ensure scope
-    const dreamModal = d3.select("#telescope-dreamModal"); // Fixed selector to match HTML
-    let openDreamId = null;
-    console.log("Modal element found:", dreamModal.empty() ? "NO" : "YES");
+    // const dreamModal = d3.select("#telescope-dreamModal"); // Fixed selector to match HTML
+    // let openDreamId = null;
+    // console.log("Modal element found:", dreamModal.empty() ? "NO" : "YES");
     
     // Test timer to verify setTimeout works
     console.log("Testing timer mechanism...");
@@ -38,9 +38,9 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     }, 3000);
     
     // Debug userIsNavigating state every 5 seconds
-    setInterval(() => {
-        console.log("DEBUG: userIsNavigating =", userIsNavigating, "openDreamId =", openDreamId);
-    }, 5000);
+    // setInterval(() => {
+    //     console.log("DEBUG: userIsNavigating =", userIsNavigating, "openDreamId =", openDreamId);
+    // }, 5000);
     // DOM references for similar panel (optional)
     const panelHeader = document.getElementById("similarPanelHeader");
     const panelContent = document.getElementById("similarPanelContent");
@@ -238,84 +238,84 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
     };
 
     // Function to start the auto-modal timer (restart if needed)
-    function startAutoModalTimer() {
-        console.log("startAutoModalTimer called - openDreamId:", openDreamId, "userIsNavigating:", userIsNavigating);
-        
-        // Don't set new timer if modal is already open or user is navigating
-        if (openDreamId !== null || userIsNavigating) {
-            console.log("Not setting timer - modal open or navigating");
-            return;
-        }
-        
-        // Clear existing timer if there is one and start fresh
-        if (autoModalTimeout) {
-            console.log("Clearing existing timer and starting new one");
-            clearTimeout(autoModalTimeout);
-            autoModalTimeout = null;
-        }
-        
-        // Start new timer for 2 seconds
-        console.log("Setting 2-second auto-modal timer");
-        const startTime = Date.now();
-        autoModalTimeout = setTimeout(() => {
-            const elapsed = Date.now() - startTime;
-            console.log(`Auto-modal timer fired after ${elapsed}ms (should be ~2000ms)!`);
-            checkForAutoModal();
-        }, 2000);
-        console.log("Timer set, autoModalTimeout =", autoModalTimeout !== null);
-    }
+    // function startAutoModalTimer() {
+    //     console.log("startAutoModalTimer called - openDreamId:", openDreamId, "userIsNavigating:", userIsNavigating);
+    //     
+    //     // Don't set new timer if modal is already open or user is navigating
+    //     if (openDreamId !== null || userIsNavigating) {
+    //         console.log("Not setting timer - modal open or navigating");
+    //         return;
+    //     }
+    //     
+    //     // Clear existing timer if there is one and start fresh
+    //     if (autoModalTimeout) {
+    //         console.log("Clearing existing timer and starting new one");
+    //         clearTimeout(autoModalTimeout);
+    //         autoModalTimeout = null;
+    //     }
+    //     
+    //     // Start new timer for 2 seconds
+    //     console.log("Setting 2-second auto-modal timer");
+    //     const startTime = Date.now();
+    //     autoModalTimeout = setTimeout(() => {
+    //         const elapsed = Date.now() - startTime;
+    //         console.log(`Auto-modal timer fired after ${elapsed}ms (should be ~2000ms)!`);
+    //         checkForAutoModal();
+    //     }, 2000);
+    //     console.log("Timer set, autoModalTimeout =", autoModalTimeout !== null);
+    // }
 
     // Function to clear the auto-modal timer
-    function clearAutoModalTimer() {
-        if (autoModalTimeout) {
-            console.log("Clearing auto-modal timer");
-            clearTimeout(autoModalTimeout);
-            autoModalTimeout = null;
-        }
-    }
+    // function clearAutoModalTimer() {
+    //     if (autoModalTimeout) {
+    //         console.log("Clearing auto-modal timer");
+    //         clearTimeout(autoModalTimeout);
+    //         autoModalTimeout = null;
+    //     }
+    // }
 
     // Function to check if we should automatically open a modal
-    function checkForAutoModal() {
-        console.log("checkForAutoModal called - openDreamId:", openDreamId, "userIsNavigating:", userIsNavigating);
-        
-        // Clear the timer first since it fired
-        autoModalTimeout = null;
-        
-        // Don't auto-open if modal is already open or user is navigating
-        if (openDreamId !== null || userIsNavigating) {
-            console.log("Aborting auto-modal - modal open or navigating");
-            return;
-        }
+    // function checkForAutoModal() {
+    //     console.log("checkForAutoModal called - openDreamId:", openDreamId, "userIsNavigating:", userIsNavigating);
+    //     
+    //     // Clear the timer first since it fired
+    //     autoModalTimeout = null;
+    //     
+    //     // Don't auto-open if modal is already open or user is navigating
+    //     if (openDreamId !== null || userIsNavigating) {
+    //         console.log("Aborting auto-modal - modal open or navigating");
+    //         return;
+    //     }
 
-        const transform = d3.zoomTransform(svg.node());
-        const centerX = width / 2;
-        const centerY = height / 2;
-        let closestNode = null;
-        let minDist = Infinity;
+    //     const transform = d3.zoomTransform(svg.node());
+    //     const centerX = width / 2;
+    //     const centerY = height / 2;
+    //     let closestNode = null;
+    //     let minDist = Infinity;
 
-        for (const node of nodes) {
-            const nodeX = xScale(node.x) * transform.k + transform.x;
-            const nodeY = yScale(node.y) * transform.k + transform.y;
-            const dx = nodeX - centerX;
-            const dy = nodeY - centerY;
-            const dist = dx * dx + dy * dy;
-            if (dist < minDist) {
-                minDist = dist;
-                closestNode = node;
-            }
-        }
+    //     for (const node of nodes) {
+    //         const nodeX = xScale(node.x) * transform.k + transform.x;
+    //         const nodeY = yScale(node.y) * transform.k + transform.y;
+    //         const dx = nodeX - centerX;
+    //         const dy = nodeY - centerY;
+    //         const dist = dx * dx + dy * dy;
+    //         if (dist < minDist) {
+    //             minDist = dist;
+    //             closestNode = node;
+    //         }
+    //     }
 
-        const maxDist = 40*40; // Same threshold as preview box
-        console.log("Closest node:", closestNode?.id, "distance:", Math.sqrt(minDist), "threshold:", Math.sqrt(maxDist));
-        
-        // If there's STILL a dream close to center, open its modal
-        if (closestNode && minDist < maxDist) {
-            console.log("Auto-opening modal for dream", closestNode.id);
-            toggleDreamModal(closestNode);
-        } else {
-            console.log("Dream no longer close to center, not opening modal");
-        }
-    }
+    //     const maxDist = 40*40; // Same threshold as preview box
+    //     console.log("Closest node:", closestNode?.id, "distance:", Math.sqrt(minDist), "threshold:", Math.sqrt(maxDist));
+    //     
+    //     // If there's STILL a dream close to center, open its modal
+    //     if (closestNode && minDist < maxDist) {
+    //         console.log("Auto-opening modal for dream", closestNode.id);
+    //         toggleDreamModal(closestNode);
+    //     } else {
+    //         console.log("Dream no longer close to center, not opening modal");
+    //     }
+    // }
 
     console.log("Simple telescope functions defined:");
     console.log("moveTelescopeX:", typeof window.moveTelescopeX);
@@ -336,11 +336,11 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         userIsNavigating = true;
 
         // Optional: close the modal if it's open
-        if (openDreamId !== null) {
-            dreamModal.style("display", "none").html("");
-            openDreamId = null;
-            d3.select(window).on("click.modal", null);
-        }
+        // if (openDreamId !== null) {
+        //     dreamModal.style("display", "none").html("");
+        //     openDreamId = null;
+        //     d3.select(window).on("click.modal", null);
+        // }
 
         // Movement / zoom
         switch(event.key) {
@@ -436,7 +436,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         .attr("fill", "#fff")
         .on("click", d => {
             centerOnDream(d.id);   // keeps your centring logic
-            toggleDreamModal(d);   // new open/close behaviour
+            // toggleDreamModal(d);   // new open/close behaviour
         })
 
     // Position links based on node positions
@@ -501,28 +501,38 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         const maxDist = 40*40; // area around center that activate the previewBox
         
         if (closestNode && minDist < maxDist) {
-            previewBox.style("display", "block")
-                      .html(`<strong>Dream ${closestNode.id}:</strong> ${closestNode.text.slice(0, 100)}...`);
+            previewBox.classed("show", true)
+                      .html(`<div class="preview-background"></div><div class="preview-text">${closestNode.text.slice(0, 600)}</div>`)
+                      .classed("fade-in", true)
+                      .classed("fade-out", false);
             
             console.log("Preview showing for dream", closestNode.id, "lastClosest:", lastClosestNode?.id);
             
             // Start timer if not already running (won't restart if already running)
             console.log("Dream close to center, starting timer if not already running");
             lastClosestNode = closestNode;
-            startAutoModalTimer();
+            // startAutoModalTimer();
         }
         else {
-            previewBox.style("display", "none");
             if (lastClosestNode !== null) {
+                // Fade out before hiding
+                console.log("FADE OUT: Starting fade out animation");
+                previewBox.classed("fade-out", true)
+                          .classed("fade-in", false);
+                console.log("FADE OUT: Classes applied, setting timeout for 1000ms");
+                setTimeout(() => {
+                    console.log("FADE OUT: Timeout completed, hiding element");
+                    previewBox.classed("show", false);
+                    lastClosestNode = null; // Only clear after animation completes
+                }, 1000); // Match the fadeOut animation duration
                 console.log("No node close to center, clearing timer");
             }
-            lastClosestNode = null;
             // Clear timer when no node is close
-            clearAutoModalTimer();
+            // clearAutoModalTimer();
         }
-        if (openDreamId !== null) {
-            previewBox.style("display", "none");
-            return;
-        }
+        // if (openDreamId !== null) {
+        //     previewBox.style("display", "none");
+        //     return;
+        // }
     }
 } // end if data is defined

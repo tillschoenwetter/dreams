@@ -1,4 +1,19 @@
+
 /* ———————————————————————————————————————————————————————— Telescope ——————————————————————————————————————————————————————————————— */
+@font-face {
+  font-family: 'Inconsolata';
+  src: url('/static/fonts/Inconsolata-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inconsolata';
+  src: url('/static/fonts/Inconsolata-Bold.woff') format('woff');
+  font-weight: 400;
+  font-style: bold;
+  font-display: swap;
+}
 
 /* Constellation container */
 .constellation-container {
@@ -121,25 +136,6 @@ body.loading {
   }
   /* ───── */
   
-  #centerPreview {
-    position: absolute;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-  
-    max-width: 70vw;
-    padding: 10px 14px;
-    border-radius: 12px;
-    background: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    font: 13px/1.4 "Helvetica Neue", Arial, sans-serif;
-    text-align: center;
-    width: 30%;
-    /* hidden by default */
-    display: none;
-    pointer-events: none;  /* so clicks pass through */
-  }
   
   /* helper class you toggle from JS */
   /* #centerPreview.shown {
@@ -159,20 +155,59 @@ body.loading {
    /*──────────────────────── HUD dream Preview ────────────────────────*/
   /* HUD che appare in basso al centro dello schermo */
   #centerPreview{
-    position: absolute;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,.70);
-    color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    max-width: 30vw;       /* ← era 70vw  (più stretta) */
-    text-align: center;
-    font: 13px/1.4 "Helvetica Neue", Arial, sans-serif;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     pointer-events: none;
     z-index: 1000;
     display: none;
+  }
+  
+  #centerPreview .preview-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,.8);
+  }
+  
+  #centerPreview .preview-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 80vw;
+    max-height: 80vh;
+    padding: 20px;
+    color: #fff;
+    font: 16px/1.45 "Inconsolata", normal;
+    text-align: center;
+    z-index: 1001;
+  }
+  
+  #centerPreview.show {
+    display: block;
+  }
+  
+  #centerPreview.fade-in {
+    animation: fadeIn 2s ease-in-out 0.5s both;
+  }
+  
+  #centerPreview.fade-out {
+    animation: fadeOut 1s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
   }
   
   
