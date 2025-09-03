@@ -191,15 +191,6 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         // Don't clear timer on movement - let it complete if dream is still close
     };
 
-    // Handle mouse movement when cursor is locked - also increase sensitivity
-    document.addEventListener('mousemove', function(e) {
-        if (document.pointerLockElement === svgElement) {
-            // Much higher sensitivity for mouse movement
-            const sensitivity = 5.0;
-            moveTelescopeX(e.movementX * sensitivity);
-            moveTelescopeY(e.movementY * sensitivity);
-        }
-    });
 
     window.zoomTelescope = function(direction) {
         const currentTransform = d3.zoomTransform(svg.node());
@@ -486,7 +477,7 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         }
         const transform = d3.zoomTransform(svg.node());
         const currentZoomLevel = transform.k;
-        const zoomThreshold = 2.5; // Only show preview when zoomed in above this level
+        const zoomThreshold = 2.2; // Only show preview when zoomed in above this level <————————————————— ZOOM THRESHOLD IS HERE!!!!!!
         
         // If zoom level is below threshold, hide preview and return
         if (currentZoomLevel < zoomThreshold) {
