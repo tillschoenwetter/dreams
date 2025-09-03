@@ -70,6 +70,10 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         .on("zoom", function () {
             container.attr("transform", d3.event.transform);
             updateCenterPreview();
+        })
+        .filter(function() {
+            // Disable default zoom behavior, we'll handle it manually
+            return false;
         });
     svg.call(zoom);
 
@@ -102,41 +106,39 @@ if (typeof nodes !== 'undefined' && typeof links !== 'undefined') {
         }
     });
 
-    // Handle mouse wheel for zooming when cursor is locked
+    // Handle mouse wheel for zooming - always zoom from center of screen
     svgElement.addEventListener('wheel', function(e) {
         e.preventDefault();
-        if (document.pointerLockElement === svgElement) {
-            const currentTransform = d3.zoomTransform(svg.node());
-            
-            // Get exact center point of the crosshair
-            const centerX = width / 2;
-            const centerY = height / 2;
-            
-            // Calculate the world coordinates at crosshair center
-            const worldCenterX = (centerX - currentTransform.x) / currentTransform.k;
-            const worldCenterY = (centerY - currentTransform.y) / currentTransform.k;
-            
-            let newScale = currentTransform.k;
-            
-            // Apply zoom based on wheel direction
-            if (e.deltaY > 0) {
-                newScale *= (1 - ZOOM_SENSITIVITY);  // Zoom out
-            } else {
-                newScale *= (1 + ZOOM_SENSITIVITY);  // Zoom in
-            }
-            
-            // Keep zoom within bounds - updated limits
-            newScale = Math.max(1, Math.min(5, newScale));  // Changed to [1, 5]
-            
-            // Calculate new translation to keep crosshair center fixed
-            const newX = centerX - worldCenterX * newScale;
-            const newY = centerY - worldCenterY * newScale;
-            
-            const newTransform = d3.zoomIdentity.translate(newX, newY).scale(newScale);
-            svg.call(zoom.transform, newTransform);
-            updateCenterPreview();
-            // Don't clear timer on mouse wheel zoom - let it complete if dream is still close
+        
+        const currentTransform = d3.zoomTransform(svg.node());
+        
+        // Always use exact center point of the screen
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        // Calculate the world coordinates at screen center
+        const worldCenterX = (centerX - currentTransform.x) / currentTransform.k;
+        const worldCenterY = (centerY - currentTransform.y) / currentTransform.k;
+        
+        let newScale = currentTransform.k;
+        
+        // Apply zoom based on wheel direction
+        if (e.deltaY > 0) {
+            newScale *= 0.9;  // Zoom out
+        } else {
+            newScale *= 1.1;  // Zoom in
         }
+        
+        // Keep zoom within bounds
+        newScale = Math.max(1, Math.min(5, newScale));
+        
+        // Calculate new translation to keep screen center fixed
+        const newX = centerX - worldCenterX * newScale;
+        const newY = centerY - worldCenterY * newScale;
+        
+        const newTransform = d3.zoomIdentity.translate(newX, newY).scale(newScale);
+        svg.call(zoom.transform, newTransform);
+        updateCenterPreview();
     });
 
     // Escape key to unlock cursor
